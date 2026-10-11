@@ -182,9 +182,7 @@ summary::-webkit-details-marker { display: none; }
 summary::after { content: "+"; font-family: var(--display); font-size: 1.5rem; line-height: 1; }
 details[open] summary::after { content: "−"; }
 .why { padding: 0 0 16px; }
-.why p { margin: 0 0 10px; }
-.why ol { margin: 0 0 10px; padding-inline-start: 1.3em; }
-.why li { margin-bottom: 6px; }
+.why p { margin: 0; }
 
 footer { margin-top: auto; padding-top: 32px; text-align: center; font-size: 0.85rem; }
 </style>
@@ -261,7 +259,9 @@ footer { margin-top: auto; padding-top: 32px; text-align: center; font-size: 0.8
       </div>
       <details>
         <summary>רוצים להבין מה עשינו?</summary>
-        <div class="why" id="why"></div>
+        <div class="why">
+          <p>אחרי מאות אירועים למדנו לחשב אוכל לפי "ביסים": כמה כל אורח באמת אוכל, בכל סוג אירוח. לפי זה חישבנו את הכמות לאירוע שלך, חילקנו אותה בין המנות כמו שבונים שולחן טוב, קצת מהכל, והוספנו מעט מעל. תמיד עדיף שיהיה יותר מאשר שיחסר.</p>
+        </div>
       </details>
       <p class="note">* חשוב לוודא מראש אלרגיות ורגישויות, למשל ללא גלוטן.</p>
       <div class="again">
@@ -379,14 +379,12 @@ function calc(a) {
   var list = build(a, need, need);
   // A morning event eats a little less, so try a slightly smaller spread and keep it
   // only when it really comes out smaller. It still never goes under `need`.
-  var lessForMorning = false;
   if (a.time === 'morning') {
     var smaller = build(a, need * MORNING_FACTOR, need);
-    if (smaller.bites < list.bites) { list = smaller; lessForMorning = true; }
+    if (smaller.bites < list.bites) list = smaller;
   }
   return {
     rows: list.rows,
-    lessForMorning: lessForMorning,
     taboon: a.kids > a.guests * TABOON_KIDS_SHARE,
     offer: a.guests >= OFFER_MIN_GUESTS
   };
@@ -517,21 +515,6 @@ function calc(a) {
       lines.push('אשמח להצעת מחיר.');
       $('offer-link').href = 'https://wa.me/' + WHATSAPP + '?text=' + encodeURIComponent(lines.join('\n'));
     }
-
-    var why = $('why');
-    why.textContent = '';
-    why.appendChild(el('p', 'אחרי מאות אירועים, אנחנו סופרות אוכל ב"ביסים": ביס הוא כף או כף וחצי מהמנה, או כריך אחד.'));
-    var ol = el('ol');
-    ol.appendChild(el('li', 'ב' + level.name + ' כל אורח אוכל בערך ' + level.range + ' ביסים. הכפלנו במספר האורחים שלך.' +
-      (result.lessForMorning ? ' בבוקר אוכלים קצת פחות, אז הורדנו מעט.' : '')));
-    var light = answers.level === 'light';
-    ol.appendChild(el('li', light
-      ? 'בכיבוד קל אין מנות חמות. חילקנו את הביסים בין מנות שקל לקחת ביד: כריכים, מאפים וקישים, וסלטים לצד.'
-      : 'חילקנו את הביסים בין המנות כמו שבונים שולחן טוב: קצת מהכל, שלכל אחד יהיה מה לאכול.'));
-    var hasBreads = result.rows.some(function (r) { return r.key === 'breads'; });
-    ol.appendChild(el('li', (light ? 'הוספנו מגש כריכים אחד' : 'הוספנו מנה חמה אחת ומגש כריכים אחד') +
-      (hasBreads ? ', וגם לחמים ומטבלים לשולחן' : '') + '. תמיד עדיף שיהיה יותר מאשר שיחסר.'));
-    why.appendChild(ol);
   }
 })();
 </script>
