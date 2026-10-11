@@ -115,7 +115,9 @@ assert.equal(check(event(20, 'light'), { hot: 3, salad: 3, bread: 3 }).verdict, 
 // 40 guests, a filling meal, offered 4 pastas, 4 salads, 3 quiches and 6 trays: not enough.
 const thin = check(event(40, 'meal'), { hot: 4, salad: 4, quiche: 3, bread: 6 });
 assert.equal(thin.verdict, 'short');
-assert.equal(thin.covers, 37);
+// It would feed 37; she is told about 35, and about 5 left without. Guests come in fives.
+assert.equal(thin.covers, 35);
+assert.equal(thin.lacking, 5);
 assert.deepEqual(thin.missing, { dishes: [{ key: 'cold', n: 1 }], more: 0 });
 
 // An empty-handed quote is short, covers nobody, and is told what a table needs.
@@ -136,11 +138,15 @@ assert.equal(check(event(50, 'meal'), { hot: 7, salad: 5, bread: 6, quiche: 3, c
 // Caterers do not all serve alike, so she can state her own caterer's sizes. A salad
 // that feeds 12 makes the same quote cover more guests, one that feeds 8 covers fewer
 // and the list asks for more salads. Left alone, a size is worth what it always was.
-const offered = { hot: 4, salad: 4, bread: 6, quiche: 3 };
-assert.equal(check(event(40, 'meal'), offered, { salad: 12 }).covers, 39);
-assert.equal(check(event(40, 'meal'), offered, { salad: 8 }).covers, 36);
-assert.equal(check(event(40, 'meal'), offered, { salad: 8 }).advised.salad, 5);
-assert.deepEqual(check(event(40, 'meal'), offered, {}), check(event(40, 'meal'), offered));
+const offered = { hot: 8, salad: 8, bread: 8, quiche: 4, cold: 4 };
+assert.equal(check(event(100, 'meal'), offered).covers, 70);
+assert.equal(check(event(100, 'meal'), offered, { salad: 12 }).covers, 75);
+assert.equal(check(event(100, 'meal'), offered, { salad: 8 }).covers, 65);
+assert.equal(check(event(100, 'meal'), offered, { salad: 8 }).lacking, 35);
+assert.ok(check(event(100, 'meal'), offered, { salad: 8 }).advised.salad > check(event(100, 'meal'), offered).advised.salad);
+assert.deepEqual(check(event(100, 'meal'), offered, {}), check(event(100, 'meal'), offered));
+// A quote one guest short of a 40-guest event is still told 35, never 40.
+assert.equal(check(event(40, 'meal'), { hot: 4, salad: 4, bread: 6, quiche: 3 }, { salad: 12 }).covers, 35);
 for (const key of QUOTE_DISHES) assert.equal(bitesPerUnit(key, shownSize(key)), DISHES[key].size, key);
 // A pizza tray is shown as 24 pieces and counted as 20; a tray of 12 is worth half that.
 assert.equal(shownSize('pizza'), 24);
@@ -172,7 +178,8 @@ for (const level of Object.keys(LEVELS)) {
           const named = Object.fromEntries(r.missing.dishes.map((d) => [d.key, d.n]));
           assert.ok(sizeOf(named) + r.missing.more * 11.5 >= gap, `missing dishes leave a gap: ${JSON.stringify(a)}`);
           for (const d of r.missing.dishes) assert.ok(d.n <= (r.advised[d.key] || 0) - (half[d.key] || 0), `asks for too much ${d.key}: ${JSON.stringify(a)}`);
-          assert.ok(r.covers < guests);
+          assert.ok(r.covers < guests && r.covers % 5 === 0, `covers ${r.covers} of ${guests}`);
+          assert.ok(r.lacking >= 5 && r.lacking % 5 === 0, `lacking ${r.lacking} of ${guests}`);
         }
       }
     }

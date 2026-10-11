@@ -132,8 +132,9 @@ function bitesPerUnit(key, typed) { return typed * DISHES[key].size / shownSize(
 // `quote` maps a dish to how many of it the quote holds. `sizes` may give, for any
 // dish, how many bites one unit of it holds at her caterer; otherwise the usual size
 // is taken. Everything it returns is counted in her caterer's units. The verdict is
-// 'short' (with how many guests the quote does cover and what would close the gap),
-// 'enough', or 'over' (with about how many dishes could go).
+// 'short' (with how many guests the quote does cover, how many are left without, and
+// what would close the gap), 'enough', or 'over' (with about how many dishes could go).
+// Guests are spoken of in fives, never one by one: nobody counts food that finely.
 function check(a, quote, sizes) {
   var level = LEVELS[a.level];
   var sizeOf = function (key) { return (sizes && sizes[key]) || DISHES[key].size; };
@@ -151,13 +152,18 @@ function check(a, quote, sizes) {
   // The recommended list must never read as too much, so "plenty" is at least that.
   var plenty = Math.max(a.guests * level.top, bitesOf(advised));
   if (have < need) {
-    return { verdict: 'short', covers: Math.floor(have / level.bites), missing: missingDishes(advised, quote, need - have, sizeOf), advised: advised };
+    // The nearest five, but always short of the guest list: this quote does not cover it.
+    var covers = Math.min(roundToFive(have / level.bites), Math.floor((a.guests - 1) / 5) * 5);
+    var lacking = Math.max(5, roundToFive(a.guests - covers));
+    return { verdict: 'short', covers: covers, lacking: lacking, missing: missingDishes(advised, quote, need - have, sizeOf), advised: advised };
   }
   if (have > plenty) {
     return { verdict: 'over', spare: Math.max(1, Math.round((have - plenty) / AVERAGE_DISH)), advised: advised };
   }
   return { verdict: 'enough', advised: advised };
 }
+
+function roundToFive(n) { return Math.round(n / 5) * 5; }
 
 // Which dishes would close a gap of `gap` bites: the ones the quote is furthest behind
 // on first, and no more of each than it takes. `more` is what is still open after that,
