@@ -110,7 +110,7 @@
   <footer>© כל הזכויות שמורות ל-LUMIÈRE</footer>
 </div>
 
-<script src="../calc.js?v=484f7eb4"></script>
+<script src="../calc.js?v=c3d57123"></script>
 <script src="../quiz.js?v=a5d1b328"></script>
 <script>
 (function () {
@@ -265,14 +265,14 @@
     if (result.verdict === 'short') {
       title = 'חסר אוכל בהצעה';
       verdict = result.covers >= 5
-        ? 'ההצעה שקיבלת מתאימה לכ-' + result.covers + ' אורחים. יש לך ' + answers.guests + ', אז חסר אוכל לכ-' + result.lacking + ' אורחים.'
+        ? 'ההצעה שקיבלת מתאימה לכ-' + result.covers + ' אורחים. לאירוע שלך צריך אוכל ל-' + result.size + ', אז חסר לכ-' + result.lacking + ' אורחים.'
         : 'ההצעה שקיבלת קטנה מאוד לאירוע של ' + answers.guests + ' אורחים.';
     } else if (result.verdict === 'over') {
       title = 'יש בהצעה יותר ממה שצריך';
       verdict = 'לאירוע כזה אפשר להוריד בערך ' + (result.spare === 1 ? 'מנה אחת' : result.spare + ' מנות') + '.';
     } else {
       title = 'ההצעה מתאימה';
-      verdict = 'יש בהצעה מספיק אוכל ל-' + answers.guests + ' אורחים.';
+      verdict = 'יש בהצעה מספיק אוכל ל-' + result.size + ' אורחים.';
     }
     $('result-title').textContent = title;
     $('verdict').textContent = verdict;

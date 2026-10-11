@@ -14,13 +14,13 @@ const base = { guests: 50, kids: 0, time: 'evening', level: 'meal', salmon: fals
 // 4 bread trays) plus the one extra hot dish and one extra tray.
 assert.deepEqual(counts(base), { hot: 7, salad: 5, bread: 6, breads: 1, quiche: 3, cold: 4 });
 
-// Guests come in fives, always up: 36 to 39 guests get the food of 40, and 41 gets the
-// food of 45. What depends on who is really coming does not round: 37 adults are not
-// yet the 40 that bring breads with dips.
-const food = (a) => { const { breads, ...rest } = counts(a); return rest; };
-for (const guests of [36, 37, 38, 39]) assert.deepEqual(food({ ...base, guests }), food({ ...base, guests: 40 }), `${guests} guests`);
-assert.deepEqual(food({ ...base, guests: 41 }), food({ ...base, guests: 45 }));
-assert.equal(counts({ ...base, guests: 37 }).breads, undefined);
+// People come in fives, always up: 36 to 39 guests are 40 in every way, the food, the
+// breads with dips and the quote button alike, and 41 guests are 45. Kids stay as typed.
+for (const guests of [36, 37, 38, 39]) {
+  assert.deepEqual(calc({ ...base, guests }), calc({ ...base, guests: 40 }), `${guests} guests`);
+  assert.deepEqual(calc({ ...base, guests, kids: 7, salmon: true }), calc({ ...base, guests: 40, kids: 7, salmon: true }), `${guests} guests with kids`);
+}
+assert.deepEqual(calc({ ...base, guests: 41 }), calc({ ...base, guests: 45 }));
 assert.equal(byFives(40), 40);
 assert.equal(byFives(1), 5);
 
@@ -37,14 +37,16 @@ assert.equal(light.hot, undefined);
 for (const time of ['morning', 'noon', 'evening']) assert.equal(counts({ ...base, level: 'light', time }).hot, undefined, time);
 assert.equal(counts(base).pastry, undefined);
 
-// Breads with dips: exactly one, at any kind of hosting, once there are 40 adults.
-// Kids do not count toward the 40, and it never changes the rest of the list.
+// Breads with dips: exactly one, at any kind of hosting, once there are 40 adults,
+// counted in fives like everyone else (36 adults are 40). Kids do not count toward
+// the 40, and it never changes the rest of the list.
 assert.equal(counts({ ...base, guests: 40 }).breads, 1);
 assert.equal(counts({ ...base, guests: 200 }).breads, 1);
-assert.equal(counts({ ...base, guests: 39 }).breads, undefined);
-assert.equal(counts({ ...base, guests: 50, kids: 11 }).breads, undefined);
-assert.equal(counts({ ...base, guests: 50, kids: 10 }).breads, 1);
-assert.equal(counts({ ...base, guests: 39 }).hot, 6);
+assert.equal(counts({ ...base, guests: 36 }).breads, 1);
+assert.equal(counts({ ...base, guests: 35 }).breads, undefined);
+assert.equal(counts({ ...base, guests: 50, kids: 11 }).breads, 1);
+assert.equal(counts({ ...base, guests: 50, kids: 15 }).breads, undefined);
+assert.equal(counts({ ...base, guests: 35 }).hot, 5);
 assert.equal(counts({ ...base, guests: 40 }).hot, 6);
 assert.deepEqual(counts({ ...base, level: 'lavish' }), { hot: 10, salad: 7, bread: 8, breads: 1, quiche: 4, cold: 6 });
 
@@ -74,16 +76,19 @@ assert.equal(counts(base).fish, undefined);
 
 // The event that exposed it: 100 guests, 63 of them kids, a filling meal with salmon.
 // The fish used to follow all 100 guests (5) while the hot dishes shrank to 9.
-// The caterer's own answer for this event is 3 fish.
+// The caterer's own answer for this event is 3 fish. Its 37 adults count as 40, so
+// breads with dips come too.
 assert.deepEqual(counts({ guests: 100, kids: 63, time: 'noon', level: 'meal', salmon: true }),
-  { hot: 14, salad: 7, bread: 6, quiche: 5, cold: 6, pizza: 5, fish: 3 });
+  { hot: 14, salad: 7, bread: 6, breads: 1, quiche: 5, cold: 6, pizza: 5, fish: 3 });
 
-// The taboon note appears only when kids are more than a third of the guests.
+// The taboon note appears only when kids are more than a third of the guests. Kids are
+// counted one by one, not in fives: 20 of 60 is not yet a third, 21 is.
 assert.equal(calc({ ...base, guests: 60, kids: 20 }).taboon, false);
 assert.equal(calc({ ...base, guests: 60, kids: 21 }).taboon, true);
 
-// The quote offer appears only from 40 guests up.
-assert.equal(calc({ ...base, guests: 39 }).offer, false);
+// The quote offer appears only from 40 guests up, counted in fives: 36 are 40.
+assert.equal(calc({ ...base, guests: 35 }).offer, false);
+assert.equal(calc({ ...base, guests: 36 }).offer, true);
 assert.equal(calc({ ...base, guests: 40 }).offer, true);
 
 // The three fixed categories never drop out, even for a tiny event.
@@ -128,6 +133,9 @@ assert.equal(thin.verdict, 'short');
 // It would feed 37; she is told about 35, and about 5 left without. Guests come in fives.
 assert.equal(thin.covers, 35);
 assert.equal(thin.lacking, 5);
+assert.equal(thin.size, 40);
+// 37 guests are checked as 40, and what she is told adds up: 35 covered, 5 without.
+assert.deepEqual(check(event(37, 'meal'), { hot: 4, salad: 4, quiche: 3, bread: 6 }), thin);
 assert.deepEqual(thin.missing, { dishes: [{ key: 'cold', n: 1 }], more: 0 });
 
 // An empty-handed quote is short, covers nobody, and is told what a table needs.
@@ -190,6 +198,7 @@ for (const level of Object.keys(LEVELS)) {
           for (const d of r.missing.dishes) assert.ok(d.n <= (r.advised[d.key] || 0) - (half[d.key] || 0), `asks for too much ${d.key}: ${JSON.stringify(a)}`);
           assert.ok(r.covers < guests && r.covers % 5 === 0, `covers ${r.covers} of ${guests}`);
           assert.ok(r.lacking >= 5 && r.lacking % 5 === 0, `lacking ${r.lacking} of ${guests}`);
+          assert.equal(r.covers + r.lacking, r.size, `the numbers she is told do not add up: ${JSON.stringify(a)}`);
         }
       }
     }
