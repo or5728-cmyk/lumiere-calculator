@@ -275,8 +275,7 @@ var DISHES = {
   salad:  { size: 10, name: 'סלטים',                        cap: 'כל סלט מתאים לכ-10 אורחים' },
   bread:  { size: 14, name: 'כריכים / קרואסונים / טורטיות', cap: 'מגשים של 12-16 יחידות' },
   pastry: { size: 24, name: 'מאפים / בורקסים',              cap: 'מגשים של כ-24 יחידות' },
-  dips:   { size: 30, name: 'לחמים ומטבלים',                cap: 'כל אחד מתאים לכ-30 אורחים' },
-  quiche: { size: 8,  name: 'קישים / פשטידות',              cap: 'כל אחד מתאים ל-8-10 אורחים' },
+  quiche: { size: 8,  name: 'קישים / פשטידות / קציצות',     cap: 'כל מנה מתאימה ל-8-10 אורחים' },
   cold:   { size: 12, name: 'מנות קרות / פלטות',            cap: 'כל אחת מתאימה ל-12-15 אורחים' }
 };
 // How the food is shared out. `extra` is added once to the whole order, not per guest.
@@ -297,8 +296,9 @@ var MIXES = {
     { key: 'cold',   share: 0.14, extra: 0, min: 0 }
   ]
 };
-// Breads and dips appear only in a light spread, one for every so many guests.
-var GUESTS_PER_DIPS = 40;
+// One serving of breads with dips joins the table once there are this many adults.
+var ADULTS_FOR_BREADS = 40;
+var BREADS = { name: 'לחמים ומטבלים', cap: 'מגוון לחמים עם מטבלים לשולחן' };
 var GUESTS_PER_FISH = 20;
 var FISH_SIZE = 15;
 var GUESTS_PER_PIZZA_TRAY = 20;
@@ -308,16 +308,16 @@ var OFFER_MIN_GUESTS = 40;
 function calc(a) {
   var total = a.guests * LEVELS[a.level].bites * (a.time === 'morning' ? MORNING_FACTOR : 1);
   var light = a.level === 'light';
-  // Fish, and breads with dips, take the place of part of the other food; pizzas come on top of it.
+  // Fish takes the place of part of the other food; breads and pizzas come on top of it.
   var fish = a.salmon ? Math.max(1, Math.round(a.guests / GUESTS_PER_FISH)) : 0;
-  var dips = light ? Math.max(1, Math.round(a.guests / GUESTS_PER_DIPS)) : 0;
-  var rest = Math.max(0, total - fish * FISH_SIZE - dips * DISHES.dips.size);
+  var breads = a.guests - a.kids >= ADULTS_FOR_BREADS ? 1 : 0;
+  var rest = Math.max(0, total - fish * FISH_SIZE);
   var rows = MIXES[light ? 'light' : 'full'].map(function (c) {
     var d = DISHES[c.key];
     var n = Math.max(c.min, Math.round(rest * c.share / d.size)) + c.extra;
     return { key: c.key, name: d.name, cap: d.cap, n: n };
   });
-  if (dips > 0) rows.splice(3, 0, { key: 'dips', name: DISHES.dips.name, cap: DISHES.dips.cap, n: dips });
+  if (breads > 0) rows.splice(3, 0, { key: 'breads', name: BREADS.name, cap: BREADS.cap, n: breads });
   if (a.kids > 0) {
     rows.push({ key: 'pizza', name: 'פיצות / פוקאצ\'ות', cap: 'מגשים של כ-16 חתיכות, בשביל הילדים',
       n: Math.max(1, Math.round(a.guests / GUESTS_PER_PIZZA_TRAY)) });
@@ -464,10 +464,11 @@ function calc(a) {
       (answers.time === 'morning' ? ' בבוקר אוכלים קצת פחות, אז הורדנו מעט.' : '')));
     var light = answers.level === 'light';
     ol.appendChild(el('li', light
-      ? 'בכיבוד קל אין מנות חמות. חילקנו את הביסים בין מנות שקל לקחת ביד: כריכים, מאפים, לחמים ומטבלים, וסלטים לצד.'
+      ? 'בכיבוד קל אין מנות חמות. חילקנו את הביסים בין מנות שקל לקחת ביד: כריכים, מאפים וקישים, וסלטים לצד.'
       : 'חילקנו את הביסים בין המנות כמו שבונים שולחן טוב: קצת מהכל, שלכל אחד יהיה מה לאכול.'));
-    ol.appendChild(el('li', (light ? 'הוספנו מגש כריכים אחד.' : 'הוספנו מנה חמה אחת ומגש כריכים אחד.') +
-      ' תמיד עדיף שיהיה יותר מאשר שיחסר.'));
+    var hasBreads = result.rows.some(function (r) { return r.key === 'breads'; });
+    ol.appendChild(el('li', (light ? 'הוספנו מגש כריכים אחד' : 'הוספנו מנה חמה אחת ומגש כריכים אחד') +
+      (hasBreads ? ', וגם לחמים ומטבלים לשולחן' : '') + '. תמיד עדיף שיהיה יותר מאשר שיחסר.'));
     why.appendChild(ol);
     why.appendChild(el('p', 'מזמינה ממקום אחר? תשאלי לכמה אורחים מתאימה כל מנה, והרשימה תעבוד גם שם.'));
   }

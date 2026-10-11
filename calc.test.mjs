@@ -11,22 +11,31 @@ const base = { guests: 50, kids: 0, time: 'evening', level: 'meal', salmon: fals
 
 // 50 guests, evening, a filling meal: a typical real order (6 hot, 5 salads,
 // 4 bread trays) plus the one extra hot dish and one extra tray.
-assert.deepEqual(counts(base), { hot: 7, salad: 5, bread: 6, quiche: 3, cold: 4 });
+assert.deepEqual(counts(base), { hot: 7, salad: 5, bread: 6, breads: 1, quiche: 3, cold: 4 });
 
 // The extra hot dish and tray are added once to the whole order, not per 10 guests.
 assert.equal(counts({ ...base, guests: 100 }).hot, 14);
 assert.equal(counts({ ...base, guests: 100 }).bread, 10);
 
 // A lighter spread asks for less, a lavish one for more.
-// A light spread has no hot dishes at all. Their share goes to pastries and to breads
-// with dips, and only the sandwich tray gets the extra one.
+// A light spread has no hot dishes at all. Their share goes to pastries, and only the
+// sandwich tray gets the extra one.
 const light = counts({ ...base, level: 'light' });
-assert.deepEqual(light, { salad: 2, bread: 3, pastry: 2, dips: 1, quiche: 2, cold: 1 });
+assert.deepEqual(light, { salad: 3, bread: 4, pastry: 2, breads: 1, quiche: 2, cold: 2 });
 assert.equal(light.hot, undefined);
 for (const time of ['morning', 'noon', 'evening']) assert.equal(counts({ ...base, level: 'light', time }).hot, undefined, time);
 assert.equal(counts(base).pastry, undefined);
-assert.equal(counts(base).dips, undefined);
-assert.deepEqual(counts({ ...base, level: 'lavish' }), { hot: 10, salad: 7, bread: 8, quiche: 4, cold: 6 });
+
+// Breads with dips: exactly one, at any kind of hosting, once there are 40 adults.
+// Kids do not count toward the 40, and it never changes the rest of the list.
+assert.equal(counts({ ...base, guests: 40 }).breads, 1);
+assert.equal(counts({ ...base, guests: 200 }).breads, 1);
+assert.equal(counts({ ...base, guests: 39 }).breads, undefined);
+assert.equal(counts({ ...base, guests: 50, kids: 11 }).breads, undefined);
+assert.equal(counts({ ...base, guests: 50, kids: 10 }).breads, 1);
+assert.equal(counts({ ...base, guests: 39 }).hot, 6);
+assert.equal(counts({ ...base, guests: 40 }).hot, 6);
+assert.deepEqual(counts({ ...base, level: 'lavish' }), { hot: 10, salad: 7, bread: 8, breads: 1, quiche: 4, cold: 6 });
 
 // Morning never asks for more than evening.
 const morning = counts({ ...base, time: 'morning' });
