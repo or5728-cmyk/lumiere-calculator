@@ -18,7 +18,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Assistant:wght@400;600;700&family=Rubik:wght@800&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="../style.css?v=80d6bd34">
+<link rel="stylesheet" href="../style.css?v=5118e473">
 </head>
 <body class="check">
 <div class="wrap">
@@ -65,6 +65,8 @@
       <fieldset class="q" id="q-quote">
         <legend class="q-title">מה יש בהצעה שקיבלת? <span class="req" aria-hidden="true">*</span></legend>
         <p class="hint">כתבי כמה יש מכל דבר. מה שאין בהצעה, אפשר להשאיר ריק</p>
+        <p class="sizes-note"><span class="req" aria-hidden="true">*</span> לא בכל קייטרינג המנות באותו גודל: יש מקומות שסלט מספיק ל-8 אורחים, ויש שהוא מספיק ל-12. בדקי בהצעה שלך, ואם הגדלים שונים ממה שכתוב כאן, אפשר לשנות אותם.</p>
+        <button class="link" type="button" id="sizes-toggle" aria-expanded="false">שינוי הגדלים</button>
         <ul class="rows" id="quote-rows"></ul>
         <p class="err" id="quote-err" role="alert"></p>
       </fieldset>
@@ -93,7 +95,7 @@
       </table>
       <div class="advice">
         <p><strong>זו המלצה בלבד.</strong> בסופו של דבר את מכירה את האורחים שלך הכי טוב: אם הם אוהבים לאכול ולהתפנק, או שמספיק להם לנשנש. לפי זה תחליטי.</p>
-        <p><strong>הגדלים משתנים בין קייטרינגים.</strong> הבדיקה מחושבת לפי הגדלים שכתובים ליד כל מנה. תבדקי מול הקייטרינג שלך לכמה אורחים מתאימה כל מנה אצלו.</p>
+        <p><strong>הגדלים משתנים בין קייטרינגים.</strong> הבדיקה מחושבת לפי הגדלים שכתובים ליד כל מנה. תבדקי מול הקייטרינג שלך לכמה אורחים מתאימה כל מנה אצלו, ואם צריך, שני אותם למעלה.</p>
       </div>
       <p class="note">* חשוב לוודא מראש אלרגיות ורגישויות, למשל ללא גלוטן.</p>
       <div class="again">
@@ -108,7 +110,7 @@
   <footer>© כל הזכויות שמורות ל-LUMIÈRE</footer>
 </div>
 
-<script src="../calc.js?v=baa9e87f"></script>
+<script src="../calc.js?v=551b24cf"></script>
 <script src="../quiz.js?v=05a464fc"></script>
 <script>
 (function () {
@@ -117,41 +119,83 @@
   var FIELDS = ['guests', 'kids', 'time', 'level', 'quote'];
   var shown = false;
 
-  // One row per dish a quote can hold: its name, what size is assumed, and a number to type.
+  function numberBox(id, cls) {
+    var input = el('input', null, cls);
+    input.id = id;
+    input.type = 'number';
+    input.inputMode = 'numeric';
+    input.step = '1';
+    input.dir = 'ltr';
+    input.autocomplete = 'off';
+    return input;
+  }
+
+  // One row per dish a quote can hold: its name, the size it is counted at, and a
+  // number to type. The size can be changed, since caterers do not all serve alike.
+  var sizesOpen = false;
   QUOTE_DISHES.forEach(function (key) {
     var d = DISHES[key];
     var li = el('li');
+    var dish = el('div', null, 'dish');
     var label = el('label');
     label.htmlFor = 'n-' + key;
     label.appendChild(el('b', d.name));
-    label.appendChild(el('small', d.cap));
-    var input = el('input', null, 'count');
-    input.id = 'n-' + key;
-    input.type = 'number';
-    input.inputMode = 'numeric';
-    input.min = '0';
-    input.step = '1';
-    input.dir = 'ltr';
-    input.placeholder = '0';
-    input.autocomplete = 'off';
-    li.appendChild(label);
-    li.appendChild(input);
+    dish.appendChild(label);
+    dish.appendChild(el('small', d.cap, 'cap'));
+
+    var size = el('div', null, 'size');
+    size.hidden = true;
+    var before = el('label', d.ask[0]);
+    before.htmlFor = 's-' + key;
+    var typed = numberBox('s-' + key, 'size-n');
+    typed.min = '1';
+    typed.defaultValue = String(shownSize(key));
+    size.appendChild(before);
+    size.appendChild(typed);
+    size.appendChild(el('span', d.ask[1]));
+    dish.appendChild(size);
+
+    var count = numberBox('n-' + key, 'count');
+    count.min = '0';
+    count.placeholder = '0';
+    li.appendChild(dish);
+    li.appendChild(count);
     $('quote-rows').appendChild(li);
   });
 
-  // How many of each dish the quote holds. A blank means none of it.
+  // Opens the sizes for changing, or puts the usual ones back.
+  $('sizes-toggle').addEventListener('click', function () {
+    sizesOpen = !sizesOpen;
+    this.setAttribute('aria-expanded', String(sizesOpen));
+    this.textContent = sizesOpen ? 'חזרה לגדלים הרגילים' : 'שינוי הגדלים';
+    QUOTE_DISHES.forEach(function (key) {
+      var row = $('n-' + key).closest('li');
+      row.querySelector('.cap').hidden = sizesOpen;
+      row.querySelector('.size').hidden = !sizesOpen;
+      if (!sizesOpen) $('s-' + key).value = String(shownSize(key));
+    });
+    onChange({ target: $('n-' + QUOTE_DISHES[0]) });
+  });
+
+  // How many of each dish the quote holds, and at what size. A blank count means none of it.
   function readQuote() {
-    var quote = {}, total = 0, bad = false;
+    var quote = {}, sizes = {}, total = 0, badCount = false, badSize = false;
     QUOTE_DISHES.forEach(function (key) {
       var text = $('n-' + key).value.trim();
       var n = text === '' ? 0 : Quiz.whole(text);
-      if (n === null) bad = true;
+      if (n === null) badCount = true;
       quote[key] = n || 0;
       total += n || 0;
+      if (sizesOpen) {
+        var typed = Quiz.whole($('s-' + key).value);
+        if (typed === null || typed < 1 || typed > 99) badSize = true;
+        else sizes[key] = bitesPerUnit(key, typed);
+      }
     });
-    if (bad) return { error: 'כותבים כאן רק מספרים שלמים' };
+    if (badCount) return { error: 'כותבים כאן רק מספרים שלמים' };
+    if (badSize) return { error: 'בגדלים כותבים מספר שלם, בין 1 ל-99' };
     if (total === 0) return { error: 'כתבי כמה יש מכל דבר בהצעה שקיבלת' };
-    return { quote: quote };
+    return { quote: quote, sizes: sizes };
   }
 
   function read() {
@@ -160,7 +204,7 @@
     var errors = event.errors || {};
     if (q.error) errors.quote = q.error;
     for (var key in errors) return { errors: errors };
-    return { answers: event.answers, quote: q.quote };
+    return { answers: event.answers, quote: q.quote, sizes: q.sizes };
   }
 
   form.addEventListener('submit', function (e) {
@@ -169,7 +213,7 @@
     Quiz.showErrors(FIELDS, r.errors || {});
     $('form-err').textContent = r.errors ? '* חסרות תשובות. סימנו לך למעלה מה צריך למלא.' : '';
     if (r.errors) { Quiz.goToFirst(FIELDS, r.errors); return; }
-    render(r.answers, r.quote);
+    render(r.answers, r.quote, r.sizes);
     shown = true;
     $('result').hidden = false;
     $('result').scrollIntoView({ block: 'start', behavior: 'smooth' });
@@ -180,13 +224,13 @@
   // that no longer makes sense takes it away rather than leave it stale.
   function onChange(e) {
     var field = e.target.name || e.target.id;
-    Quiz.clearError(field.indexOf('n-') === 0 ? 'quote' : field);
+    Quiz.clearError(/^[ns]-/.test(field) ? 'quote' : field);
     $('form-err').textContent = '';
     if (!shown) return;
     var r = read();
     if (r.errors) { $('result').hidden = true; Quiz.showErrors(FIELDS, r.errors); return; }
     Quiz.showErrors(FIELDS, {});
-    render(r.answers, r.quote);
+    render(r.answers, r.quote, r.sizes);
     $('result').hidden = false;
   }
   form.addEventListener('input', onChange);
@@ -198,6 +242,7 @@
   });
 
   $('restart').addEventListener('click', function () {
+    if (sizesOpen) $('sizes-toggle').click();
     form.reset();
     shown = false;
     Quiz.showErrors(FIELDS, {});
@@ -211,16 +256,17 @@
     return n === 1 ? DISHES[key].one : n + ' ' + DISHES[key].many;
   }
 
-  function render(answers, quote) {
-    var result = check(answers, quote);
+  function render(answers, quote, sizes) {
+    var result = check(answers, quote, sizes);
     var event = Quiz.describe(answers);
     $('summary').textContent = event.who + ', ' + event.when + ', ' + event.level;
 
     var title, verdict;
     if (result.verdict === 'short') {
       title = 'חסר אוכל בהצעה';
-      verdict = result.covers >= 1
-        ? 'ההצעה שקיבלת מתאימה לכ-' + result.covers + ' אורחים. יש לך ' + answers.guests + ', אז חסר אוכל לכ-' + (answers.guests - result.covers) + ' אורחים.'
+      var lacking = answers.guests - result.covers;
+      verdict = result.covers >= 2
+        ? 'ההצעה שקיבלת מתאימה לכ-' + result.covers + ' אורחים. יש לך ' + answers.guests + ', אז חסר אוכל ' + (lacking === 1 ? 'לאורח אחד בערך.' : 'לכ-' + lacking + ' אורחים.')
         : 'ההצעה שקיבלת קטנה מאוד לאירוע של ' + answers.guests + ' אורחים.';
     } else if (result.verdict === 'over') {
       title = 'יש בהצעה יותר ממה שצריך';

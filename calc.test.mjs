@@ -4,8 +4,8 @@ import assert from 'node:assert/strict';
 import { PAGES, readPage, stamped } from './stamp.mjs';
 
 const src = readFileSync(new URL('./docs/calc.js', import.meta.url), 'utf8');
-const { calc, check, DISHES, LEVELS, QUOTE_DISHES } =
-  new Function(src + '; return { calc, check, DISHES, LEVELS, QUOTE_DISHES };')();
+const { calc, check, DISHES, LEVELS, QUOTE_DISHES, shownSize, bitesPerUnit } =
+  new Function(src + '; return { calc, check, DISHES, LEVELS, QUOTE_DISHES, shownSize, bitesPerUnit };')();
 
 const counts = (a) => Object.fromEntries(calc(a).rows.map((r) => [r.key, r.n]));
 const base = { guests: 50, kids: 0, time: 'evening', level: 'meal', salmon: false };
@@ -133,6 +133,19 @@ assert.ok(lots.spare >= 1);
 assert.ok(check(event(50, 'meal'), { hot: 7, salad: 5, bread: 4, quiche: 3, cold: 4, fish: 3 }).advised.fish >= 1);
 assert.equal(check(event(50, 'meal'), { hot: 7, salad: 5, bread: 6, quiche: 3, cold: 4 }).advised.fish, undefined);
 
+// Caterers do not all serve alike, so she can state her own caterer's sizes. A salad
+// that feeds 12 makes the same quote cover more guests, one that feeds 8 covers fewer
+// and the list asks for more salads. Left alone, a size is worth what it always was.
+const offered = { hot: 4, salad: 4, bread: 6, quiche: 3 };
+assert.equal(check(event(40, 'meal'), offered, { salad: 12 }).covers, 39);
+assert.equal(check(event(40, 'meal'), offered, { salad: 8 }).covers, 36);
+assert.equal(check(event(40, 'meal'), offered, { salad: 8 }).advised.salad, 5);
+assert.deepEqual(check(event(40, 'meal'), offered, {}), check(event(40, 'meal'), offered));
+for (const key of QUOTE_DISHES) assert.equal(bitesPerUnit(key, shownSize(key)), DISHES[key].size, key);
+// A pizza tray is shown as 24 pieces and counted as 20; a tray of 12 is worth half that.
+assert.equal(shownSize('pizza'), 24);
+assert.equal(bitesPerUnit('pizza', 12), 10);
+
 // The two tools must agree. Whatever the calculator recommends for an event, the check
 // calls enough: never short, never too much. And when a quote is short, the dishes named
 // as missing really close the gap, without asking for more of a dish than was advised.
@@ -145,6 +158,12 @@ for (const level of Object.keys(LEVELS)) {
           const a = { guests, kids: Math.min(kids, guests), time, level };
           const advised = Object.fromEntries(calc({ ...a, salmon }).rows.filter((r) => DISHES[r.key]).map((r) => [r.key, r.n]));
           assert.equal(check(a, advised).verdict, 'enough', `the tools disagree on ${JSON.stringify({ ...a, salmon })}`);
+          // The same holds at any caterer's sizes: the list it recommends is itself enough.
+          for (const scale of [0.6, 0.8, 1.3, 1.7]) {
+            const sizes = Object.fromEntries(QUOTE_DISHES.map((k) => [k, Math.max(1, Math.round(DISHES[k].size * scale))]));
+            const there = check(a, { fish: salmon ? 1 : 0 }, sizes).advised;
+            assert.equal(check(a, there, sizes).verdict, 'enough', `the tools disagree at sizes x${scale} on ${JSON.stringify({ ...a, salmon })}`);
+          }
 
           const half = Object.fromEntries(Object.entries(advised).map(([k, n]) => [k, Math.floor(n / 2)]));
           const r = check(a, half);

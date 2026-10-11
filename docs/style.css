@@ -184,9 +184,43 @@ footer { margin-top: auto; padding-top: 32px; text-align: center; font-size: 0.8
   border-bottom: 1px dashed var(--line);
 }
 .rows li:last-child { border-bottom: 0; }
-.rows label { flex: 1; min-width: 0; cursor: pointer; }
+.dish { flex: 1; min-width: 0; }
+.dish > label { cursor: pointer; }
 .rows b { display: block; font-size: 1.15rem; font-weight: 700; }
 .rows small { display: block; font-size: 0.9rem; }
+.size { display: flex; align-items: center; flex-wrap: wrap; gap: 6px; margin-top: 4px; font-size: 0.95rem; }
+.size-n {
+  width: 58px;
+  height: 44px;
+  border: 2px solid var(--ink);
+  border-radius: 12px;
+  background: var(--cream);
+  color: var(--ink);
+  font-family: var(--body);
+  font-size: 1.1rem;
+  font-weight: 700;
+  text-align: center;
+  padding: 0;
+  appearance: textfield;
+  -moz-appearance: textfield;
+}
+.size-n::-webkit-outer-spin-button, .size-n::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+.size-n:focus { outline: none; border-color: var(--ink-deep); }
+.sizes-note { margin: 0; text-align: center; font-size: 1rem; }
+.link {
+  align-self: center;
+  min-height: 44px;
+  padding: 0 14px;
+  border: 0;
+  background: transparent;
+  color: var(--ink);
+  font-family: var(--body);
+  font-size: 1.05rem;
+  font-weight: 700;
+  text-decoration: underline;
+  text-underline-offset: 4px;
+  cursor: pointer;
+}
 .count {
   flex: none;
   width: 84px;
