@@ -25,6 +25,7 @@
   --ink-deep: #5F3C3F;
   --blush: #F4E4DA;
   --line: rgba(121, 79, 81, 0.28);
+  --alert: #B3261E;
   --display: "Rubik", "Assistant", "Arial Hebrew", Arial, sans-serif;
   --body: "Assistant", "Arial Hebrew", Arial, sans-serif;
 }
@@ -96,7 +97,12 @@ legend.q-title { margin-bottom: 10px; }
 .num::placeholder { color: var(--line); }
 .num:focus { outline: none; border-bottom-color: var(--ink-deep); background: rgba(244, 228, 218, 0.5); }
 .hint { margin: 0; text-align: center; font-size: 0.95rem; }
-.err { margin: 0; text-align: center; font-weight: 700; color: var(--ink-deep); }
+.err { margin: 0; text-align: center; font-weight: 700; color: var(--alert); }
+.req { color: var(--alert); }
+.req-note { margin: 0; text-align: center; font-size: 0.95rem; }
+.submit { display: flex; flex-direction: column; gap: 10px; }
+.q.missing .num { border-bottom-color: var(--alert); }
+.q.missing .opt span { border-color: var(--alert); }
 .err:empty { display: none; }
 
 .opts { display: flex; flex-direction: column; gap: 10px; }
@@ -197,8 +203,8 @@ footer { margin-top: auto; padding-top: 32px; text-align: center; font-size: 0.8
 
     <form id="quiz" novalidate>
       <div class="q">
-        <label class="q-title" for="guests">כמה אורחים?</label>
-        <input class="num" id="guests" type="number" inputmode="numeric" min="1" max="2000" step="1" dir="ltr" placeholder="50" autocomplete="off" aria-describedby="guests-err">
+        <label class="q-title" for="guests">כמה אורחים? <span class="req" aria-hidden="true">*</span></label>
+        <input class="num" id="guests" type="number" inputmode="numeric" min="1" max="2000" step="1" dir="ltr" placeholder="50" autocomplete="off" aria-required="true" aria-describedby="guests-err">
         <p class="err" id="guests-err" role="alert"></p>
       </div>
 
@@ -210,7 +216,7 @@ footer { margin-top: auto; padding-top: 32px; text-align: center; font-size: 0.8
       </div>
 
       <fieldset class="q" id="q-time">
-        <legend class="q-title">מתי האירוע?</legend>
+        <legend class="q-title">מתי האירוע? <span class="req" aria-hidden="true">*</span></legend>
         <div class="opts row">
           <label class="opt"><input type="radio" name="time" value="morning"><span>בוקר</span></label>
           <label class="opt"><input type="radio" name="time" value="noon"><span>צהריים</span></label>
@@ -220,7 +226,7 @@ footer { margin-top: auto; padding-top: 32px; text-align: center; font-size: 0.8
       </fieldset>
 
       <fieldset class="q" id="q-level">
-        <legend class="q-title">איזה אירוח?</legend>
+        <legend class="q-title">איזה אירוח? <span class="req" aria-hidden="true">*</span></legend>
         <div class="opts">
           <label class="opt"><input type="radio" name="level" value="light"><span>כיבוד קל<small>לתת לאורחים לנשנש, לא לשבוע</small></span></label>
           <label class="opt"><input type="radio" name="level" value="meal"><span>ארוחה משביעה<small>לתת לאורחים ממש ארוחה</small></span></label>
@@ -239,7 +245,11 @@ footer { margin-top: auto; padding-top: 32px; text-align: center; font-size: 0.8
         <p class="err" id="salmon-err" role="alert"></p>
       </fieldset>
 
-      <button class="go" type="submit">חישוב</button>
+      <div class="submit">
+        <p class="req-note"><span class="req" aria-hidden="true">*</span> שאלות חובה</p>
+        <p class="err" id="form-err" role="alert"></p>
+        <button class="go" type="submit">חישוב</button>
+      </div>
     </form>
 
     <section id="result" hidden>
@@ -426,14 +436,20 @@ function calc(a) {
   }
 
   var FIELDS = ['guests', 'kids', 'time', 'level', 'salmon'];
+  // Marks each question that still needs an answer, so it is plain what is missing.
   function showErrors(errors) {
-    FIELDS.forEach(function (f) { $(f + '-err').textContent = errors[f] || ''; });
+    FIELDS.forEach(function (f) {
+      var line = $(f + '-err');
+      line.textContent = errors[f] ? '* ' + errors[f] : '';
+      line.closest('.q').classList.toggle('missing', Boolean(errors[f]));
+    });
   }
 
   form.addEventListener('submit', function (e) {
     e.preventDefault();
     var r = read();
     showErrors(r.errors || {});
+    $('form-err').textContent = r.errors ? '* חסרות תשובות. סימנו לך למעלה מה צריך למלא.' : '';
     if (r.errors) {
       var first = FIELDS.filter(function (f) { return r.errors[f]; })[0];
       var target = $(first) || $('q-' + first);
@@ -452,7 +468,11 @@ function calc(a) {
   // and an answer that no longer makes sense takes it away rather than leave it stale.
   function onChange(e) {
     var f = e.target.name || e.target.id;
-    if ($(f + '-err')) $(f + '-err').textContent = '';
+    if ($(f + '-err')) {
+      $(f + '-err').textContent = '';
+      $(f + '-err').closest('.q').classList.remove('missing');
+    }
+    $('form-err').textContent = '';
     if (!shown) return;
     var r = read();
     if (r.errors) { $('result').hidden = true; showErrors(r.errors); return; }
@@ -472,6 +492,7 @@ function calc(a) {
     form.reset();
     shown = false;
     showErrors({});
+    $('form-err').textContent = '';
     $('result').hidden = true;
     window.scrollTo({ top: 0, behavior: 'smooth' });
     $('top').focus({ preventScroll: true });
