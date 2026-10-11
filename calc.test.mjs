@@ -4,8 +4,8 @@ import assert from 'node:assert/strict';
 
 const html = readFileSync(new URL('./docs/index.html', import.meta.url), 'utf8');
 const src = html.split('/*calc:start*/')[1].split('/*calc:end*/')[0];
-const { calc, DISHES, LEVELS, MORNING_FACTOR, PIZZA_SIZE, FISH_SIZE } =
-  new Function(src + '; return { calc, DISHES, LEVELS, MORNING_FACTOR, PIZZA_SIZE, FISH_SIZE };')();
+const { calc, DISHES, LEVELS, PIZZA_SIZE, FISH_SIZE } =
+  new Function(src + '; return { calc, DISHES, LEVELS, PIZZA_SIZE, FISH_SIZE };')();
 
 const counts = (a) => Object.fromEntries(calc(a).rows.map((r) => [r.key, r.n]));
 const base = { guests: 50, kids: 0, time: 'evening', level: 'meal', salmon: false };
@@ -38,9 +38,6 @@ assert.equal(counts({ ...base, guests: 39 }).hot, 6);
 assert.equal(counts({ ...base, guests: 40 }).hot, 6);
 assert.deepEqual(counts({ ...base, level: 'lavish' }), { hot: 10, salad: 7, bread: 8, breads: 1, quiche: 4, cold: 6 });
 
-// Morning never asks for more than evening.
-const morning = counts({ ...base, time: 'morning' });
-for (const k of Object.keys(morning)) assert.ok(morning[k] <= counts(base)[k], k);
 
 // Kids: one pizza tray per 20 guests, at least one. A tray counts as 20 bites and
 // takes the place of part of the other food, so the rest of the list gets shorter.
@@ -68,20 +65,22 @@ const tiny = counts({ ...base, guests: 1 });
 assert.ok(tiny.hot >= 1 && tiny.salad >= 1 && tiny.bread >= 1);
 
 // The promise of the guide, checked over every event size: the list never holds
-// fewer bites than the guests need, whatever the answers are. (Breads with dips are
-// extra and are not counted.) Without kids or salmon, an event of 30 or more also
-// stays under the top of the guide's range.
+// fewer bites than the bottom of the guide's range, whatever the answers are, at any
+// time of day. It may only go over. (Breads with dips are extra and are not counted.)
+// A morning list is never bigger than the evening one. Without kids or salmon, an
+// event of 30 or more also stays under the top of the guide's range.
 const SIZE = { ...Object.fromEntries(Object.entries(DISHES).map(([k, d]) => [k, d.size])), pizza: PIZZA_SIZE, fish: FISH_SIZE, breads: 0 };
 const bites = (a) => calc(a).rows.reduce((sum, r) => sum + r.n * SIZE[r.key], 0);
 const TOP = { light: 4, meal: 6, lavish: 9 };
 for (const level of Object.keys(LEVELS)) {
   for (let guests = 1; guests <= 300; guests++) {
     for (const time of ['morning', 'noon', 'evening']) {
-      const need = guests * LEVELS[level].bites * (time === 'morning' ? MORNING_FACTOR : 1);
+      const need = guests * LEVELS[level].bites;
       for (const kids of [0, 1, Math.floor(guests / 2)]) {
         for (const salmon of [false, true]) {
           const a = { guests, kids: Math.min(kids, guests), time, level, salmon };
           assert.ok(bites(a) >= need, `too little food: ${JSON.stringify(a)} gives ${bites(a)}, needs ${need}`);
+          if (time === 'morning') assert.ok(bites(a) <= bites({ ...a, time: 'evening' }), `morning bigger than evening: ${JSON.stringify(a)}`);
         }
       }
       if (guests >= 30) {
