@@ -40,17 +40,27 @@ assert.deepEqual(counts({ ...base, level: 'lavish' }), { hot: 10, salad: 7, brea
 
 
 // Kids: one pizza tray per 20 guests, at least one. A tray counts as 20 bites and
-// takes the place of part of the other food, so the rest of the list gets shorter.
+// takes the place of part of the other food, but never of the hot dishes: the kids
+// eat those too.
 assert.equal(counts({ ...base, kids: 1 }).pizza, 3);
 assert.equal(counts({ ...base, guests: 10, kids: 2 }).pizza, 1);
-assert.deepEqual(counts({ ...base, kids: 15 }), { hot: 6, salad: 4, bread: 5, quiche: 2, cold: 3, pizza: 3 });
+assert.deepEqual(counts({ ...base, kids: 15 }), { hot: 7, salad: 3, bread: 4, quiche: 2, cold: 3, pizza: 3 });
+assert.equal(counts({ ...base, kids: 15 }).hot, counts(base).hot);
 assert.equal(counts(base).pizza, undefined);
 
-// Salmon: one fish per 20 guests, at least one, instead of part of the other food.
+// Salmon: one fish per 20 adults, at least one, instead of part of the other food.
+// Kids are not counted for the fish, and the hot dishes are never cut for it.
 assert.equal(counts({ ...base, salmon: true }).fish, 3);
 assert.equal(counts({ ...base, guests: 10, salmon: true }).fish, 1);
-assert.ok(counts({ ...base, salmon: true }).hot <= counts(base).hot);
+assert.equal(counts({ ...base, salmon: true }).hot, counts(base).hot);
+assert.equal(counts({ ...base, guests: 100, kids: 63, salmon: true }).fish, 2);
+assert.equal(counts({ ...base, guests: 30, kids: 30, salmon: true }).fish, undefined);
 assert.equal(counts(base).fish, undefined);
+
+// The event that exposed it: 100 guests, 63 of them kids, a filling meal with salmon.
+// The fish used to follow all 100 guests while the hot dishes shrank to 9.
+assert.deepEqual(counts({ guests: 100, kids: 63, time: 'noon', level: 'meal', salmon: true }),
+  { hot: 14, salad: 7, bread: 7, quiche: 4, cold: 5, pizza: 5, fish: 2 });
 
 // The taboon note appears only when kids are more than a third of the guests.
 assert.equal(calc({ ...base, guests: 60, kids: 20 }).taboon, false);

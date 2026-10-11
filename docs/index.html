@@ -278,13 +278,14 @@ var DISHES = {
   bread:  { size: 14, name: 'כריכים / קרואסונים / טורטיות', cap: 'מגשים של 12-16 יחידות' },
   pastry: { size: 24, name: 'מאפים / בורקסים',              cap: 'מגשים של כ-24 יחידות' },
   quiche: { size: 8,  name: 'קישים / פשטידות / קציצות',     cap: 'כל מנה מתאימה ל-8-10 אורחים' },
-  cold:   { size: 12, name: 'מנות קרות / פלטות',            cap: 'כל אחת מתאימה ל-12-15 אורחים' }
+  cold:   { size: 12, name: 'מנות קרות / פלטת גבינות',      cap: 'כל אחת מתאימה ל-12-15 אורחים' }
 };
 // How the food is shared out. `extra` is added once to the whole order, not per guest.
+// `keep` marks a dish that fish and pizzas never cut into.
 // A light spread has no hot dishes at all: their share goes to food you pick up by hand.
 var MIXES = {
   full: [
-    { key: 'hot',    share: 0.25, extra: 1, min: 1 },
+    { key: 'hot',    share: 0.25, extra: 1, min: 1, keep: true },
     { key: 'salad',  share: 0.20, extra: 0, min: 1 },
     { key: 'bread',  share: 0.26, extra: 1, min: 1 },
     { key: 'quiche', share: 0.10, extra: 0, min: 0 },
@@ -301,7 +302,7 @@ var MIXES = {
 // One serving of breads with dips joins the table once there are this many adults.
 var ADULTS_FOR_BREADS = 40;
 var BREADS = { name: 'לחמים ומטבלים', cap: 'מגוון לחמים עם מטבלים לשולחן' };
-var GUESTS_PER_FISH = 20;
+var ADULTS_PER_FISH = 20;
 var FISH_SIZE = 15;
 var GUESTS_PER_PIZZA_TRAY = 20;
 // A pizza tray holds about 24 pieces; it is counted as 20 so the list is not cut too far.
@@ -313,15 +314,21 @@ var OFFER_MIN_GUESTS = 40;
 // guests must get, the bottom of the guide's range: a list may go over it, never under.
 function build(a, total, need) {
   var light = a.level === 'light';
-  // Fish and pizzas take the place of part of the other food; breads come on top of it.
-  var fish = a.salmon ? Math.max(1, Math.round(a.guests / GUESTS_PER_FISH)) : 0;
+  var adults = a.guests - a.kids;
+  // Fish is for the adults. Pizzas are for the kids, counted by the size of the event.
+  var fish = a.salmon && adults > 0 ? Math.max(1, Math.round(adults / ADULTS_PER_FISH)) : 0;
   var pizza = a.kids > 0 ? Math.max(1, Math.round(a.guests / GUESTS_PER_PIZZA_TRAY)) : 0;
-  var breads = a.guests - a.kids >= ADULTS_FOR_BREADS ? 1 : 0;
-  var rest = Math.max(0, total - fish * FISH_SIZE - pizza * PIZZA_SIZE);
-  var have = fish * FISH_SIZE + pizza * PIZZA_SIZE;
-  var rows = MIXES[light ? 'light' : 'full'].map(function (c) {
+  var breads = adults >= ADULTS_FOR_BREADS ? 1 : 0;
+  // Fish and pizzas take the place of part of the other food, but never of the hot
+  // dishes: those are what the kids eat too. Breads come on top of everything.
+  var mix = MIXES[light ? 'light' : 'full'];
+  var kept = mix.reduce(function (sum, c) { return sum + (c.keep ? c.share : 0); }, 0);
+  var taken = fish * FISH_SIZE + pizza * PIZZA_SIZE;
+  var open = Math.max(0, total * (1 - kept) - taken) / (1 - kept);
+  var have = taken;
+  var rows = mix.map(function (c) {
     var d = DISHES[c.key];
-    var ideal = rest * c.share / d.size;
+    var ideal = (c.keep ? total : open) * c.share / d.size;
     var n = Math.max(c.min, Math.round(ideal));
     have += (n + c.extra) * d.size;
     return { key: c.key, name: d.name, cap: d.cap, n: n + c.extra, size: d.size, short: ideal - n };
