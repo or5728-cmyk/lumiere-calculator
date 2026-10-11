@@ -1,11 +1,11 @@
-// Runs the calculator's own logic, lifted straight out of index.html, against known cases.
+// Runs the very file the two pages load, docs/calc.js, against known cases.
 import { readFileSync } from 'node:fs';
 import assert from 'node:assert/strict';
+import { PAGES, readPage, stamped } from './stamp.mjs';
 
-const html = readFileSync(new URL('./docs/index.html', import.meta.url), 'utf8');
-const src = html.split('/*calc:start*/')[1].split('/*calc:end*/')[0];
-const { calc, DISHES, LEVELS, PIZZA_SIZE, FISH_SIZE } =
-  new Function(src + '; return { calc, DISHES, LEVELS, PIZZA_SIZE, FISH_SIZE };')();
+const src = readFileSync(new URL('./docs/calc.js', import.meta.url), 'utf8');
+const { calc, check, DISHES, LEVELS, QUOTE_DISHES } =
+  new Function(src + '; return { calc, check, DISHES, LEVELS, QUOTE_DISHES };')();
 
 const counts = (a) => Object.fromEntries(calc(a).rows.map((r) => [r.key, r.n]));
 const base = { guests: 50, kids: 0, time: 'evening', level: 'meal', salmon: false };
@@ -85,9 +85,8 @@ assert.ok(tiny.hot >= 1 && tiny.salad >= 1 && tiny.bread >= 1);
 // time of day. It may only go over. (Breads with dips are extra and are not counted.)
 // A morning list is never bigger than the evening one. Without kids or salmon, an
 // event of 30 or more also stays under the top of the guide's range.
-const SIZE = { ...Object.fromEntries(Object.entries(DISHES).map(([k, d]) => [k, d.size])), pizza: PIZZA_SIZE, fish: FISH_SIZE, breads: 0 };
+const SIZE = { ...Object.fromEntries(Object.entries(DISHES).map(([k, d]) => [k, d.size])), breads: 0 };
 const bites = (a) => calc(a).rows.reduce((sum, r) => sum + r.n * SIZE[r.key], 0);
-const TOP = { light: 4, meal: 6, lavish: 9 };
 for (const level of Object.keys(LEVELS)) {
   for (let guests = 1; guests <= 300; guests++) {
     for (const time of ['morning', 'noon', 'evening']) {
@@ -101,11 +100,68 @@ for (const level of Object.keys(LEVELS)) {
       }
       if (guests >= 30) {
         const plain = { guests, kids: 0, time, level, salmon: false };
-        assert.ok(bites(plain) <= guests * TOP[level], `too much food: ${JSON.stringify(plain)} gives ${bites(plain)}`);
+        assert.ok(bites(plain) <= guests * LEVELS[level].top, `too much food: ${JSON.stringify(plain)} gives ${bites(plain)}`);
       }
     }
   }
 }
+
+// ---- The quote check ----
+const event = (guests, level, extra = {}) => ({ guests, kids: 0, time: 'evening', level, ...extra });
+
+// The two worked examples in the guide come out the way the guide says.
+// 20 guests, light, offered 3 pastas, 3 salads and 3 sandwich trays: too much.
+assert.equal(check(event(20, 'light'), { hot: 3, salad: 3, bread: 3 }).verdict, 'over');
+// 40 guests, a filling meal, offered 4 pastas, 4 salads, 3 quiches and 6 trays: not enough.
+const thin = check(event(40, 'meal'), { hot: 4, salad: 4, quiche: 3, bread: 6 });
+assert.equal(thin.verdict, 'short');
+assert.equal(thin.covers, 37);
+assert.deepEqual(thin.missing, { dishes: [{ key: 'cold', n: 1 }], more: 0 });
+
+// An empty-handed quote is short, covers nobody, and is told what a table needs.
+const nothing = check(event(50, 'meal'), {});
+assert.equal(nothing.verdict, 'short');
+assert.equal(nothing.covers, 0);
+assert.ok(nothing.missing.dishes.length >= 3);
+
+// Far more than the event needs reads as too much, with at least one dish to spare.
+const lots = check(event(50, 'meal'), { hot: 14, salad: 10, bread: 12, quiche: 6, cold: 8 });
+assert.equal(lots.verdict, 'over');
+assert.ok(lots.spare >= 1);
+
+// A fish in the quote is compared with a list that has fish in it, not held against her.
+assert.ok(check(event(50, 'meal'), { hot: 7, salad: 5, bread: 4, quiche: 3, cold: 4, fish: 3 }).advised.fish >= 1);
+assert.equal(check(event(50, 'meal'), { hot: 7, salad: 5, bread: 6, quiche: 3, cold: 4 }).advised.fish, undefined);
+
+// The two tools must agree. Whatever the calculator recommends for an event, the check
+// calls enough: never short, never too much. And when a quote is short, the dishes named
+// as missing really close the gap, without asking for more of a dish than was advised.
+const sizeOf = (counts) => QUOTE_DISHES.reduce((sum, k) => sum + (counts[k] || 0) * DISHES[k].size, 0);
+for (const level of Object.keys(LEVELS)) {
+  for (let guests = 1; guests <= 300; guests++) {
+    for (const time of ['morning', 'evening']) {
+      for (const kids of [0, 1, Math.floor(guests / 2)]) {
+        for (const salmon of [false, true]) {
+          const a = { guests, kids: Math.min(kids, guests), time, level };
+          const advised = Object.fromEntries(calc({ ...a, salmon }).rows.filter((r) => DISHES[r.key]).map((r) => [r.key, r.n]));
+          assert.equal(check(a, advised).verdict, 'enough', `the tools disagree on ${JSON.stringify({ ...a, salmon })}`);
+
+          const half = Object.fromEntries(Object.entries(advised).map(([k, n]) => [k, Math.floor(n / 2)]));
+          const r = check(a, half);
+          if (r.verdict !== 'short') continue;
+          const gap = guests * LEVELS[level].bites - sizeOf(half);
+          const named = Object.fromEntries(r.missing.dishes.map((d) => [d.key, d.n]));
+          assert.ok(sizeOf(named) + r.missing.more * 11.5 >= gap, `missing dishes leave a gap: ${JSON.stringify(a)}`);
+          for (const d of r.missing.dishes) assert.ok(d.n <= (r.advised[d.key] || 0) - (half[d.key] || 0), `asks for too much ${d.key}: ${JSON.stringify(a)}`);
+          assert.ok(r.covers < guests);
+        }
+      }
+    }
+  }
+}
+
+// Each page asks for the shared files by the stamp of what they hold right now.
+for (const page of PAGES) assert.equal(readPage(page), stamped(readPage(page)), `${page} has a stale stamp: run node stamp.mjs`);
 
 console.log('calc: all cases pass');
 for (const g of [20, 40, 50, 60, 80, 100, 150]) console.log(g, JSON.stringify(counts({ ...base, guests: g })));

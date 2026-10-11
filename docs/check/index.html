@@ -1,0 +1,261 @@
+<!doctype html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>ההצעה שקיבלת מספיקה? | LUMIÈRE</title>
+<meta name="description" content="כמה פרטים על האירוע ועל הצעת הקייטרינג שקיבלת, ותדעי אם יש בה מספיק אוכל.">
+<meta name="theme-color" content="#FDF6ED">
+<meta property="og:type" content="website">
+<meta property="og:locale" content="he_IL">
+<meta property="og:url" content="https://calc.lumiere.co.il/check/">
+<meta property="og:title" content="ההצעה שקיבלת מספיקה?">
+<meta property="og:description" content="כמה פרטים על האירוע ועל ההצעה, ותדעי אם יש בה מספיק אוכל.">
+<meta property="og:image" content="https://calc.lumiere.co.il/og-check.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Assistant:wght@400;600;700&family=Rubik:wght@800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../style.css?v=10ad1724">
+</head>
+<body>
+<div class="wrap">
+  <img class="logo" src="../logo.png" alt="Lumière" width="440" height="252">
+
+  <main>
+    <h1 id="top" tabindex="-1">ההצעה שקיבלת מספיקה?</h1>
+    <p class="lede">כמה פרטים על האירוע ועל ההצעה, ותדעי אם יש בה מספיק אוכל</p>
+
+    <form id="quiz" novalidate>
+      <div class="q">
+        <label class="q-title" for="guests">כמה אורחים? <span class="req" aria-hidden="true">*</span></label>
+        <input class="num" id="guests" type="number" inputmode="numeric" min="1" max="2000" step="1" dir="ltr" placeholder="50" autocomplete="off" aria-required="true" aria-describedby="guests-err">
+        <p class="err" id="guests-err" role="alert"></p>
+      </div>
+
+      <div class="q">
+        <label class="q-title" for="kids">כמה מתוכם ילדים?</label>
+        <input class="num" id="kids" type="number" inputmode="numeric" min="0" step="1" dir="ltr" placeholder="0" autocomplete="off" aria-describedby="kids-hint kids-err">
+        <p class="hint" id="kids-hint">אין ילדים? אפשר להשאיר ריק</p>
+        <p class="err" id="kids-err" role="alert"></p>
+      </div>
+
+      <fieldset class="q" id="q-time">
+        <legend class="q-title">מתי האירוע? <span class="req" aria-hidden="true">*</span></legend>
+        <div class="opts row">
+          <label class="opt"><input type="radio" name="time" value="morning"><span>בוקר</span></label>
+          <label class="opt"><input type="radio" name="time" value="noon"><span>צהריים</span></label>
+          <label class="opt"><input type="radio" name="time" value="evening"><span>ערב</span></label>
+        </div>
+        <p class="err" id="time-err" role="alert"></p>
+      </fieldset>
+
+      <fieldset class="q" id="q-level">
+        <legend class="q-title">איזה אירוח? <span class="req" aria-hidden="true">*</span></legend>
+        <div class="opts">
+          <label class="opt"><input type="radio" name="level" value="light"><span>כיבוד קל<small>לתת לאורחים לנשנש, לא לשבוע</small></span></label>
+          <label class="opt"><input type="radio" name="level" value="meal"><span>ארוחה משביעה<small>לתת לאורחים ממש ארוחה</small></span></label>
+          <label class="opt"><input type="radio" name="level" value="lavish"><span>שולחן שופע<small>שפע, הכל מהכל, וכנראה גם יישאר</small></span></label>
+        </div>
+        <p class="err" id="level-err" role="alert"></p>
+      </fieldset>
+
+      <fieldset class="q" id="q-quote">
+        <legend class="q-title">מה יש בהצעה שקיבלת? <span class="req" aria-hidden="true">*</span></legend>
+        <p class="hint">כתבי כמה יש מכל דבר. מה שאין בהצעה, אפשר להשאיר ריק</p>
+        <ul class="rows" id="quote-rows"></ul>
+        <p class="err" id="quote-err" role="alert"></p>
+      </fieldset>
+
+      <div class="submit">
+        <p class="req-note"><span class="req" aria-hidden="true">*</span> שאלות חובה</p>
+        <p class="err" id="form-err" role="alert"></p>
+        <button class="go" type="submit">בדיקה</button>
+      </div>
+    </form>
+
+    <section id="result" hidden>
+      <div>
+        <h2 id="result-title" tabindex="-1"></h2>
+        <p class="summary" id="summary"></p>
+        <p class="verdict" id="verdict"></p>
+      </div>
+      <div class="gap" id="gap" hidden>
+        <p>מה בערך חסר:</p>
+        <ul id="gap-list"></ul>
+      </div>
+      <table class="compare">
+        <caption>ההצעה שלך מול הרשימה המומלצת</caption>
+        <thead><tr><th scope="col">מנה</th><th scope="col">בהצעה</th><th scope="col">מומלץ</th></tr></thead>
+        <tbody id="compare"></tbody>
+      </table>
+      <div class="advice">
+        <p><strong>זו המלצה בלבד.</strong> בסופו של דבר את מכירה את האורחים שלך הכי טוב: אם הם אוהבים לאכול ולהתפנק, או שמספיק להם לנשנש. לפי זה תחליטי.</p>
+        <p><strong>הגדלים משתנים בין קייטרינגים.</strong> הבדיקה מחושבת לפי הגדלים שכתובים ליד כל מנה. תבדקי מול הקייטרינג שלך לכמה אורחים מתאימה כל מנה אצלו.</p>
+      </div>
+      <p class="note">* חשוב לוודא מראש אלרגיות ורגישויות, למשל ללא גלוטן.</p>
+      <div class="again">
+        <button type="button" id="change">שינוי תשובות</button>
+        <button type="button" id="restart">בדיקה חדשה</button>
+      </div>
+    </section>
+
+    <p class="cross"><a href="../">אין לך עדיין הצעה? למחשבון הכמויות</a></p>
+  </main>
+
+  <footer>© כל הזכויות שמורות ל-LUMIÈRE</footer>
+</div>
+
+<script src="../calc.js?v=baa9e87f"></script>
+<script src="../quiz.js?v=05a464fc"></script>
+<script>
+(function () {
+  var $ = Quiz.$, el = Quiz.el;
+  var form = $('quiz');
+  var FIELDS = ['guests', 'kids', 'time', 'level', 'quote'];
+  var shown = false;
+
+  // One row per dish a quote can hold: its name, what size is assumed, and a number to type.
+  QUOTE_DISHES.forEach(function (key) {
+    var d = DISHES[key];
+    var li = el('li');
+    var label = el('label');
+    label.htmlFor = 'n-' + key;
+    label.appendChild(el('b', d.name));
+    label.appendChild(el('small', d.cap));
+    var input = el('input', null, 'count');
+    input.id = 'n-' + key;
+    input.type = 'number';
+    input.inputMode = 'numeric';
+    input.min = '0';
+    input.step = '1';
+    input.dir = 'ltr';
+    input.placeholder = '0';
+    input.autocomplete = 'off';
+    li.appendChild(label);
+    li.appendChild(input);
+    $('quote-rows').appendChild(li);
+  });
+
+  // How many of each dish the quote holds. A blank means none of it.
+  function readQuote() {
+    var quote = {}, total = 0, bad = false;
+    QUOTE_DISHES.forEach(function (key) {
+      var text = $('n-' + key).value.trim();
+      var n = text === '' ? 0 : Quiz.whole(text);
+      if (n === null) bad = true;
+      quote[key] = n || 0;
+      total += n || 0;
+    });
+    if (bad) return { error: 'כותבים כאן רק מספרים שלמים' };
+    if (total === 0) return { error: 'כתבי כמה יש מכל דבר בהצעה שקיבלת' };
+    return { quote: quote };
+  }
+
+  function read() {
+    var event = Quiz.readEvent(form);
+    var q = readQuote();
+    var errors = event.errors || {};
+    if (q.error) errors.quote = q.error;
+    for (var key in errors) return { errors: errors };
+    return { answers: event.answers, quote: q.quote };
+  }
+
+  form.addEventListener('submit', function (e) {
+    e.preventDefault();
+    var r = read();
+    Quiz.showErrors(FIELDS, r.errors || {});
+    $('form-err').textContent = r.errors ? '* חסרות תשובות. סימנו לך למעלה מה צריך למלא.' : '';
+    if (r.errors) { Quiz.goToFirst(FIELDS, r.errors); return; }
+    render(r.answers, r.quote);
+    shown = true;
+    $('result').hidden = false;
+    $('result').scrollIntoView({ block: 'start', behavior: 'smooth' });
+    $('result-title').focus({ preventScroll: true });
+  });
+
+  // Once an answer is on screen it follows the form: a change updates it, and a form
+  // that no longer makes sense takes it away rather than leave it stale.
+  function onChange(e) {
+    var field = e.target.name || e.target.id;
+    Quiz.clearError(field.indexOf('n-') === 0 ? 'quote' : field);
+    $('form-err').textContent = '';
+    if (!shown) return;
+    var r = read();
+    if (r.errors) { $('result').hidden = true; Quiz.showErrors(FIELDS, r.errors); return; }
+    Quiz.showErrors(FIELDS, {});
+    render(r.answers, r.quote);
+    $('result').hidden = false;
+  }
+  form.addEventListener('input', onChange);
+  form.addEventListener('change', onChange);
+
+  $('change').addEventListener('click', function () {
+    $('top').scrollIntoView({ block: 'start', behavior: 'smooth' });
+    $('top').focus({ preventScroll: true });
+  });
+
+  $('restart').addEventListener('click', function () {
+    form.reset();
+    shown = false;
+    Quiz.showErrors(FIELDS, {});
+    $('form-err').textContent = '';
+    $('result').hidden = true;
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+    $('top').focus({ preventScroll: true });
+  });
+
+  function howMany(key, n) {
+    return n === 1 ? DISHES[key].one : n + ' ' + DISHES[key].many;
+  }
+
+  function render(answers, quote) {
+    var result = check(answers, quote);
+    var event = Quiz.describe(answers);
+    $('summary').textContent = event.who + ', ' + event.when + ', ' + event.level;
+
+    var title, verdict;
+    if (result.verdict === 'short') {
+      title = 'חסר אוכל בהצעה';
+      verdict = result.covers >= 1
+        ? 'ההצעה שקיבלת מתאימה לכ-' + result.covers + ' אורחים. יש לך ' + answers.guests + ', אז חסר אוכל לכ-' + (answers.guests - result.covers) + ' אורחים.'
+        : 'ההצעה שקיבלת קטנה מאוד לאירוע של ' + answers.guests + ' אורחים.';
+    } else if (result.verdict === 'over') {
+      title = 'יש בהצעה יותר ממה שצריך';
+      verdict = 'לאירוע כזה אפשר להוריד בערך ' + (result.spare === 1 ? 'מנה אחת' : result.spare + ' מנות') + '.';
+    } else {
+      title = 'ההצעה מתאימה';
+      verdict = 'יש בהצעה מספיק אוכל ל-' + answers.guests + ' אורחים.';
+    }
+    $('result-title').textContent = title;
+    $('verdict').textContent = verdict;
+
+    var gap = $('gap-list');
+    gap.textContent = '';
+    $('gap').hidden = result.verdict !== 'short';
+    if (result.verdict === 'short') {
+      result.missing.dishes.forEach(function (d) { gap.appendChild(el('li', howMany(d.key, d.n))); });
+      if (result.missing.more > 0) {
+        var more = result.missing.more === 1 ? 'מנה אחת' : result.missing.more + ' מנות';
+        gap.appendChild(el('li', (result.missing.dishes.length ? 'ועוד בערך ' : 'בערך ') + more + ', מכל סוג'));
+      }
+    }
+
+    var rows = $('compare');
+    rows.textContent = '';
+    QUOTE_DISHES.forEach(function (key) {
+      var asked = quote[key] || 0, advised = result.advised[key] || 0;
+      if (!asked && !advised) return;
+      var tr = el('tr');
+      tr.appendChild(el('td', DISHES[key].name));
+      tr.appendChild(el('td', String(asked), 'n'));
+      tr.appendChild(el('td', String(advised), 'n'));
+      rows.appendChild(tr);
+    });
+  }
+})();
+</script>
+</body>
+</html>

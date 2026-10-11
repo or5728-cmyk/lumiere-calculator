@@ -18,180 +18,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Assistant:wght@400;600;700&family=Rubik:wght@800&display=swap" rel="stylesheet">
-<style>
-:root {
-  --cream: #FDF6ED;
-  --ink: #794F51;
-  --ink-deep: #5F3C3F;
-  --blush: #F4E4DA;
-  --line: rgba(121, 79, 81, 0.28);
-  --alert: #B3261E;
-  --display: "Rubik", "Assistant", "Arial Hebrew", Arial, sans-serif;
-  --body: "Assistant", "Arial Hebrew", Arial, sans-serif;
-}
-* { box-sizing: border-box; }
-[hidden] { display: none !important; }
-html { -webkit-text-size-adjust: 100%; }
-body {
-  margin: 0;
-  background: var(--cream);
-  color: var(--ink);
-  font-family: var(--body);
-  font-size: 18px;
-  line-height: 1.5;
-}
-.wrap {
-  max-width: 460px;
-  min-height: 100dvh;
-  margin: 0 auto;
-  padding: 20px 20px 32px;
-  display: flex;
-  flex-direction: column;
-}
-.logo { display: block; width: 168px; height: auto; margin: 0 auto 20px; }
-h1, h2 {
-  font-family: var(--display);
-  font-weight: 800;
-  color: var(--ink);
-  text-align: center;
-  line-height: 1.12;
-  margin: 0;
-  text-shadow: 0 3px 5px rgba(121, 79, 81, 0.22);
-}
-h1 { font-size: clamp(2.1rem, 10vw, 2.9rem); }
-h2 { font-size: clamp(1.75rem, 8vw, 2.25rem); }
-h1:focus, h2:focus { outline: none; }
-.lede { text-align: center; margin: 10px 0 0; font-size: 1.1rem; }
-
-form { display: flex; flex-direction: column; gap: 30px; margin-top: 32px; }
-.q { border: 0; margin: 0; padding: 0; min-width: 0; display: flex; flex-direction: column; gap: 10px; }
-.q-title {
-  display: block;
-  width: 100%;
-  padding: 0;
-  font-family: var(--display);
-  font-weight: 800;
-  font-size: 1.4rem;
-  line-height: 1.2;
-  text-align: center;
-  color: var(--ink);
-}
-legend.q-title { margin-bottom: 10px; }
-.num {
-  width: 100%;
-  height: 72px;
-  border: 0;
-  border-bottom: 3px solid var(--ink);
-  border-radius: 0;
-  background: transparent;
-  color: var(--ink);
-  font-family: var(--display);
-  font-weight: 800;
-  font-size: 2.6rem;
-  text-align: center;
-  padding: 0;
-  appearance: textfield;
-  -moz-appearance: textfield;
-}
-.num::-webkit-outer-spin-button, .num::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
-.num::placeholder { color: var(--line); }
-.num:focus { outline: none; border-bottom-color: var(--ink-deep); background: rgba(244, 228, 218, 0.5); }
-.hint { margin: 0; text-align: center; font-size: 0.95rem; }
-.err { margin: 0; text-align: center; font-weight: 700; color: var(--alert); }
-.req { color: var(--alert); }
-.req-note { margin: 0; text-align: center; font-size: 0.95rem; }
-.submit { display: flex; flex-direction: column; gap: 10px; }
-.q.missing .num { border-bottom-color: var(--alert); }
-.q.missing .opt span { border-color: var(--alert); }
-.err:empty { display: none; }
-
-.opts { display: flex; flex-direction: column; gap: 10px; }
-.opts.row { flex-direction: row; }
-.opt { flex: 1; display: block; cursor: pointer; }
-.opt input { position: absolute; opacity: 0; width: 1px; height: 1px; }
-.opt span {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  min-height: 60px;
-  padding: 10px 12px;
-  border: 2px solid var(--ink);
-  border-radius: 18px;
-  font-size: 1.2rem;
-  font-weight: 700;
-  text-align: center;
-}
-.opt small { font-size: 1rem; font-weight: 400; }
-.opt input:checked + span { background: var(--ink); color: var(--cream); }
-.opt input:focus-visible + span { outline: 3px solid var(--ink-deep); outline-offset: 3px; }
-
-.go {
-  width: 100%;
-  min-height: 58px;
-  border: 0;
-  border-radius: 999px;
-  background: var(--ink);
-  color: var(--cream);
-  font-family: var(--body);
-  font-size: 1.25rem;
-  font-weight: 700;
-  cursor: pointer;
-  text-decoration: none;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-.go:active { background: var(--ink-deep); }
-.again { display: flex; gap: 10px; }
-.again button {
-  flex: 1;
-  min-height: 52px;
-  border: 2px solid var(--ink);
-  border-radius: 999px;
-  background: transparent;
-  color: var(--ink);
-  font-family: var(--body);
-  font-size: 1.1rem;
-  font-weight: 700;
-  cursor: pointer;
-}
-.again button:active { background: var(--blush); }
-:focus-visible { outline: 3px solid var(--ink-deep); outline-offset: 3px; }
-
-#result { display: flex; flex-direction: column; gap: 18px; margin-top: 44px; padding-top: 36px; border-top: 3px solid var(--ink); scroll-margin-top: 12px; }
-.summary { text-align: center; margin: 8px 0 0; }
-.list { list-style: none; margin: 0; padding: 0; }
-.list li {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 16px;
-  padding: 12px 0;
-  border-bottom: 1px dashed var(--line);
-}
-.list li:last-child { border-bottom: 0; }
-.list b { display: block; font-size: 1.2rem; font-weight: 700; }
-.list small { display: block; font-size: 0.95rem; }
-.list .n { font-family: var(--display); font-weight: 800; font-size: 2.4rem; line-height: 1; min-width: 1.4em; text-align: center; }
-.note { margin: 0; font-size: 1rem; }
-#taboon { font-size: 1.2rem; font-weight: 700; text-align: center; }
-.advice { margin: 0; padding: 14px 16px; border: 2px solid var(--ink); border-radius: 18px; text-align: center; }
-.advice p { margin: 0; }
-.advice p + p { margin-top: 12px; padding-top: 12px; border-top: 1px dashed var(--line); }
-.offer { background: var(--blush); border-radius: 22px; padding: 20px 18px; text-align: center; }
-.offer p { margin: 0 0 12px; font-size: 1.25rem; font-weight: 700; }
-
-details { border-top: 1px dashed var(--line); border-bottom: 1px dashed var(--line); }
-summary { list-style: none; cursor: pointer; padding: 14px 0; font-size: 1.15rem; font-weight: 700; display: flex; justify-content: space-between; align-items: center; }
-summary::-webkit-details-marker { display: none; }
-summary::after { content: "+"; font-family: var(--display); font-size: 1.5rem; line-height: 1; }
-details[open] summary::after { content: "−"; }
-.why { padding: 0 0 16px; }
-.why p { margin: 0; }
-
-footer { margin-top: auto; padding-top: 32px; text-align: center; font-size: 0.85rem; }
-</style>
+<link rel="stylesheet" href="style.css?v=10ad1724">
 </head>
 <body>
 <div class="wrap">
@@ -242,7 +69,6 @@ footer { margin-top: auto; padding-top: 32px; text-align: center; font-size: 0.8
           <label class="opt"><input type="radio" name="salmon" value="no"><span>לא</span></label>
         </div>
         <p class="hint">לא בחרת? נחשב בלי דג</p>
-        <p class="err" id="salmon-err" role="alert"></p>
       </fieldset>
 
       <div class="submit">
@@ -279,184 +105,36 @@ footer { margin-top: auto; padding-top: 32px; text-align: center; font-size: 0.8
         <button type="button" id="restart">חישוב חדש</button>
       </div>
     </section>
+
+    <p class="cross"><a href="check/">קיבלת כבר הצעה? בדקי אם היא מספיקה</a></p>
   </main>
 
   <footer>© כל הזכויות שמורות ל-LUMIÈRE</footer>
 </div>
 
+<script src="calc.js?v=baa9e87f"></script>
+<script src="quiz.js?v=05a464fc"></script>
 <script>
-/*calc:start*/
-// How many "bites" one guest eats, per kind of hosting. The guide gives a range for
-// each; `bites` is the number the calculator multiplies by (the bottom of the range).
-var LEVELS = {
-  light:  { name: 'כיבוד קל',      range: '3-4', bites: 3 },
-  meal:   { name: 'ארוחה משביעה', range: '5-6', bites: 5 },
-  lavish: { name: 'שולחן שופע',    range: '7-9', bites: 7 }
-};
-var TIMES = { morning: 'בוקר', noon: 'צהריים', evening: 'ערב' };
-// Morning events eat a little less.
-var MORNING_FACTOR = 0.95;
-// Every kind of dish the list can show, and how many bites one unit of it holds.
-var DISHES = {
-  hot:    { size: 10, name: 'מנות חמות',                    cap: 'כל מנה מתאימה לכ-10 אורחים' },
-  salad:  { size: 10, name: 'סלטים',                        cap: 'כל סלט מתאים לכ-10 אורחים' },
-  bread:  { size: 14, name: 'כריכים / קרואסונים / טורטיות', cap: 'מגשים של 12-16 יחידות' },
-  pastry: { size: 24, name: 'מאפים / בורקסים / פינגר פוד',  cap: 'מגשים של כ-24 יחידות' },
-  quiche: { size: 8,  name: 'קישים / פשטידות / קציצות',     cap: 'כל מנה מתאימה ל-8-10 אורחים' },
-  cold:   { size: 12, name: 'מנות קרות',                    cap: 'למשל פלטת גבינות, דגים נאים או אנטיפסטי. כל אחת מתאימה ל-12-15 אורחים' }
-};
-// How the food is shared out. `extra` is added once to the whole order, not per guest.
-// `keep` marks a dish that fish and pizzas never cut into. `swap` marks the dish a
-// fish takes the place of: in real orders a fish on the table means fewer sandwich trays,
-// while the hot dishes and salads stay as they were.
-// A light spread has no hot dishes at all: their share goes to food you pick up by hand.
-var MIXES = {
-  full: [
-    { key: 'hot',    share: 0.25, extra: 1, min: 1, keep: true },
-    { key: 'salad',  share: 0.20, extra: 0, min: 1 },
-    { key: 'bread',  share: 0.26, extra: 1, min: 1, swap: true },
-    { key: 'quiche', share: 0.10, extra: 0, min: 0 },
-    { key: 'cold',   share: 0.19, extra: 0, min: 0 }
-  ],
-  light: [
-    { key: 'salad',  share: 0.18, extra: 0, min: 1 },
-    { key: 'bread',  share: 0.28, extra: 1, min: 1, swap: true },
-    { key: 'pastry', share: 0.30, extra: 0, min: 1 },
-    { key: 'quiche', share: 0.10, extra: 0, min: 0 },
-    { key: 'cold',   share: 0.14, extra: 0, min: 0 }
-  ]
-};
-// One serving of breads with dips joins the table once there are this many adults.
-var ADULTS_FOR_BREADS = 40;
-var BREADS = { name: 'לחמים ומטבלים', cap: 'מגוון לחמים עם מטבלים לשולחן' };
-var ADULTS_PER_FISH = 20;
-// For the fish, a kid counts as half an adult.
-var KID_SHARE_OF_FISH = 0.5;
-var FISH_SIZE = 15;
-// How much of the sandwich trays one fish takes the place of. In real orders a fish
-// comes with about two thirds of a tray fewer, not a whole tray.
-var FISH_REPLACES = 10;
-var GUESTS_PER_PIZZA_TRAY = 20;
-// A pizza tray holds about 24 pieces; it is counted as 20 so the list is not cut too far.
-var PIZZA_SIZE = 20;
-var TABOON_KIDS_SHARE = 1 / 3;
-var OFFER_MIN_GUESTS = 40;
-
-// Builds a list that spreads `total` bites over the dishes. `need` is the least the
-// guests must get, the bottom of the guide's range: a list may go over it, never under.
-function build(a, total, need) {
-  var light = a.level === 'light';
-  var adults = a.guests - a.kids;
-  // Fish is mostly for the adults. Pizzas are for the kids, counted by the size of the event.
-  var fish = a.salmon ? Math.max(1, Math.round((adults + a.kids * KID_SHARE_OF_FISH) / ADULTS_PER_FISH)) : 0;
-  var pizza = a.kids > 0 ? Math.max(1, Math.round(a.guests / GUESTS_PER_PIZZA_TRAY)) : 0;
-  var breads = adults >= ADULTS_FOR_BREADS ? 1 : 0;
-  // Pizzas take the place of part of the other food, but never of the hot dishes:
-  // those are what the kids eat too. A fish takes the place of sandwich trays.
-  // Breads with dips come on top of everything.
-  var mix = MIXES[light ? 'light' : 'full'];
-  var kept = mix.reduce(function (sum, c) { return sum + (c.keep ? c.share : 0); }, 0);
-  var pizzaBites = pizza * PIZZA_SIZE;
-  var fishBites = fish * FISH_SIZE;
-  var open = Math.max(0, total * (1 - kept) - pizzaBites) / (1 - kept);
-  var have = pizzaBites + fishBites;
-  var rows = mix.map(function (c) {
-    var d = DISHES[c.key];
-    var budget = (c.keep ? total : open) * c.share;
-    if (c.swap) budget = Math.max(0, budget - fish * FISH_REPLACES);
-    var ideal = budget / d.size;
-    var n = Math.max(c.min, Math.round(ideal));
-    have += (n + c.extra) * d.size;
-    return { key: c.key, name: d.name, cap: d.cap, n: n + c.extra, size: d.size, short: ideal - n };
-  });
-  // Whole trays round unevenly and can leave the list under what the guests need.
-  // Top it up with whichever dish was rounded down the most: better too much than too little.
-  while (have < need) {
-    var r = rows.reduce(function (a, b) { return b.short > a.short ? b : a; });
-    r.n += 1;
-    r.short -= 1;
-    have += r.size;
-  }
-  rows = rows.map(function (r) { return { key: r.key, name: r.name, cap: r.cap, n: r.n }; });
-  if (breads > 0) rows.splice(3, 0, { key: 'breads', name: BREADS.name, cap: BREADS.cap, n: breads });
-  if (pizza > 0) rows.push({ key: 'pizza', name: 'פיצות / פוקאצ\'ות', cap: 'מגשים של כ-24 חתיכות, בשביל הילדים', n: pizza });
-  if (fish > 0) rows.push({ key: 'fish', name: 'דג סלמון', cap: 'כל דג מתאים ל-15-20 אורחים', n: fish });
-  return { rows: rows.filter(function (r) { return r.n > 0; }), bites: have };
-}
-
-function calc(a) {
-  var need = a.guests * LEVELS[a.level].bites;
-  var list = build(a, need, need);
-  // A morning event eats a little less, so try a slightly smaller spread and keep it
-  // only when it really comes out smaller. It still never goes under `need`.
-  if (a.time === 'morning') {
-    var smaller = build(a, need * MORNING_FACTOR, need);
-    if (smaller.bites < list.bites) list = smaller;
-  }
-  return {
-    rows: list.rows,
-    taboon: a.kids > a.guests * TABOON_KIDS_SHARE,
-    offer: a.guests >= OFFER_MIN_GUESTS
-  };
-}
-/*calc:end*/
-
 (function () {
   var WHATSAPP = '972533314432';
-  var form = document.getElementById('quiz');
-  var $ = function (id) { return document.getElementById(id); };
+  var $ = Quiz.$, el = Quiz.el;
+  var form = $('quiz');
+  var FIELDS = ['guests', 'kids', 'time', 'level'];
   var shown = false;
 
-  function picked(name) {
-    var c = form.querySelector('input[name="' + name + '"]:checked');
-    return c ? c.value : null;
-  }
-
-  // Reads the form. Returns { answers } when everything is filled in correctly,
-  // otherwise { errors } keyed by the question that needs attention.
+  // The event questions, plus the salmon one: left unanswered, it means no.
   function read() {
-    var errors = {};
-    var g = $('guests').value.trim();
-    var guests = /^\d+$/.test(g) ? parseInt(g, 10) : null;
-    if (guests === null || guests < 1) errors.guests = 'כמה אורחים יהיו באירוע?';
-    else if (guests > 2000) errors.guests = 'המחשבון מתאים לאירועים של עד 2,000 אורחים';
-
-    var k = $('kids').value.trim();
-    var kids = k === '' ? 0 : (/^\d+$/.test(k) ? parseInt(k, 10) : null);
-    if (kids === null) errors.kids = 'כמה ילדים? אם אין, אפשר לכתוב 0';
-    else if (guests !== null && kids > guests) errors.kids = 'מספר הילדים לא יכול להיות גדול ממספר האורחים';
-
-    // Kids and salmon may be left blank: a blank means no.
-    var time = picked('time'), level = picked('level'), salmon = picked('salmon');
-    if (!time) errors.time = 'בחרי בוקר, צהריים או ערב';
-    if (!level) errors.level = 'בחרי איזה אירוח מתאים לך';
-
-    for (var key in errors) return { errors: errors };
-    return { answers: { guests: guests, kids: kids, time: time, level: level, salmon: salmon === 'yes' } };
-  }
-
-  var FIELDS = ['guests', 'kids', 'time', 'level', 'salmon'];
-  // Marks each question that still needs an answer, so it is plain what is missing.
-  function showErrors(errors) {
-    FIELDS.forEach(function (f) {
-      var line = $(f + '-err');
-      line.textContent = errors[f] ? '* ' + errors[f] : '';
-      line.closest('.q').classList.toggle('missing', Boolean(errors[f]));
-    });
+    var r = Quiz.readEvent(form);
+    if (r.answers) r.answers.salmon = Quiz.picked(form, 'salmon') === 'yes';
+    return r;
   }
 
   form.addEventListener('submit', function (e) {
     e.preventDefault();
     var r = read();
-    showErrors(r.errors || {});
+    Quiz.showErrors(FIELDS, r.errors || {});
     $('form-err').textContent = r.errors ? '* חסרות תשובות. סימנו לך למעלה מה צריך למלא.' : '';
-    if (r.errors) {
-      var first = FIELDS.filter(function (f) { return r.errors[f]; })[0];
-      var target = $(first) || $('q-' + first);
-      target.scrollIntoView({ block: 'center', behavior: 'smooth' });
-      if (target.tagName === 'INPUT') target.focus({ preventScroll: true });
-      return;
-    }
+    if (r.errors) { Quiz.goToFirst(FIELDS, r.errors); return; }
     render(r.answers);
     shown = true;
     $('result').hidden = false;
@@ -467,16 +145,12 @@ function calc(a) {
   // Once a list is on screen it follows the answers: a changed answer updates it,
   // and an answer that no longer makes sense takes it away rather than leave it stale.
   function onChange(e) {
-    var f = e.target.name || e.target.id;
-    if ($(f + '-err')) {
-      $(f + '-err').textContent = '';
-      $(f + '-err').closest('.q').classList.remove('missing');
-    }
+    Quiz.clearError(e.target.name || e.target.id);
     $('form-err').textContent = '';
     if (!shown) return;
     var r = read();
-    if (r.errors) { $('result').hidden = true; showErrors(r.errors); return; }
-    showErrors({});
+    if (r.errors) { $('result').hidden = true; Quiz.showErrors(FIELDS, r.errors); return; }
+    Quiz.showErrors(FIELDS, {});
     render(r.answers);
     $('result').hidden = false;
   }
@@ -491,26 +165,17 @@ function calc(a) {
   $('restart').addEventListener('click', function () {
     form.reset();
     shown = false;
-    showErrors({});
+    Quiz.showErrors(FIELDS, {});
     $('form-err').textContent = '';
     $('result').hidden = true;
     window.scrollTo({ top: 0, behavior: 'smooth' });
     $('top').focus({ preventScroll: true });
   });
 
-  function el(tag, text, cls) {
-    var n = document.createElement(tag);
-    if (text != null) n.textContent = text;
-    if (cls) n.className = cls;
-    return n;
-  }
-
   function render(answers) {
-    var level = LEVELS[answers.level];
     var result = calc(answers);
-    var who = answers.guests + ' אורחים' + (answers.kids > 0 ? ', מתוכם ' + answers.kids + ' ילדים' : '');
-    var when = 'ב' + TIMES[answers.time];
-    $('summary').textContent = who + ', ' + when + ', ' + level.name;
+    var event = Quiz.describe(answers);
+    $('summary').textContent = event.who + ', ' + event.when + ', ' + event.level;
 
     var list = $('list');
     list.textContent = '';
@@ -529,7 +194,7 @@ function calc(a) {
     $('offer').hidden = !result.offer;
     if (result.offer) {
       var lines = ['היי אור, הגעתי מהמחשבון באתר.',
-        'יש לי אירוע של ' + who + ', ' + when + ', ' + level.name + '.',
+        'יש לי אירוע של ' + event.who + ', ' + event.when + ', ' + event.level + '.',
         'הרשימה שיצאה לי:'];
       result.rows.forEach(function (r) { lines.push('• ' + r.name + ': ' + r.n); });
       if (result.taboon) lines.push('יש הרבה ילדים, אשמח לשמוע גם על טאבון פיצות.');
