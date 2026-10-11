@@ -4,8 +4,8 @@ import assert from 'node:assert/strict';
 import { PAGES, readPage, stamped } from './stamp.mjs';
 
 const src = readFileSync(new URL('./docs/calc.js', import.meta.url), 'utf8');
-const { calc, check, DISHES, LEVELS, QUOTE_DISHES, shownSize, bitesPerUnit } =
-  new Function(src + '; return { calc, check, DISHES, LEVELS, QUOTE_DISHES, shownSize, bitesPerUnit };')();
+const { calc, check, DISHES, LEVELS, QUOTE_DISHES, shownSize, bitesPerUnit, byFives } =
+  new Function(src + '; return { calc, check, DISHES, LEVELS, QUOTE_DISHES, shownSize, bitesPerUnit, byFives };')();
 
 const counts = (a) => Object.fromEntries(calc(a).rows.map((r) => [r.key, r.n]));
 const base = { guests: 50, kids: 0, time: 'evening', level: 'meal', salmon: false };
@@ -13,6 +13,16 @@ const base = { guests: 50, kids: 0, time: 'evening', level: 'meal', salmon: fals
 // 50 guests, evening, a filling meal: a typical real order (6 hot, 5 salads,
 // 4 bread trays) plus the one extra hot dish and one extra tray.
 assert.deepEqual(counts(base), { hot: 7, salad: 5, bread: 6, breads: 1, quiche: 3, cold: 4 });
+
+// Guests come in fives, always up: 36 to 39 guests get the food of 40, and 41 gets the
+// food of 45. What depends on who is really coming does not round: 37 adults are not
+// yet the 40 that bring breads with dips.
+const food = (a) => { const { breads, ...rest } = counts(a); return rest; };
+for (const guests of [36, 37, 38, 39]) assert.deepEqual(food({ ...base, guests }), food({ ...base, guests: 40 }), `${guests} guests`);
+assert.deepEqual(food({ ...base, guests: 41 }), food({ ...base, guests: 45 }));
+assert.equal(counts({ ...base, guests: 37 }).breads, undefined);
+assert.equal(byFives(40), 40);
+assert.equal(byFives(1), 5);
 
 // The extra hot dish and tray are added once to the whole order, not per 10 guests.
 assert.equal(counts({ ...base, guests: 100 }).hot, 14);
@@ -90,7 +100,7 @@ const bites = (a) => calc(a).rows.reduce((sum, r) => sum + r.n * SIZE[r.key], 0)
 for (const level of Object.keys(LEVELS)) {
   for (let guests = 1; guests <= 300; guests++) {
     for (const time of ['morning', 'noon', 'evening']) {
-      const need = guests * LEVELS[level].bites;
+      const need = byFives(guests) * LEVELS[level].bites;
       for (const kids of [0, 1, Math.floor(guests / 2)]) {
         for (const salmon of [false, true]) {
           const a = { guests, kids: Math.min(kids, guests), time, level, salmon };
@@ -100,7 +110,7 @@ for (const level of Object.keys(LEVELS)) {
       }
       if (guests >= 30) {
         const plain = { guests, kids: 0, time, level, salmon: false };
-        assert.ok(bites(plain) <= guests * LEVELS[level].top, `too much food: ${JSON.stringify(plain)} gives ${bites(plain)}`);
+        assert.ok(bites(plain) <= byFives(guests) * LEVELS[level].top, `too much food: ${JSON.stringify(plain)} gives ${bites(plain)}`);
       }
     }
   }
@@ -174,7 +184,7 @@ for (const level of Object.keys(LEVELS)) {
           const half = Object.fromEntries(Object.entries(advised).map(([k, n]) => [k, Math.floor(n / 2)]));
           const r = check(a, half);
           if (r.verdict !== 'short') continue;
-          const gap = guests * LEVELS[level].bites - sizeOf(half);
+          const gap = byFives(guests) * LEVELS[level].bites - sizeOf(half);
           const named = Object.fromEntries(r.missing.dishes.map((d) => [d.key, d.n]));
           assert.ok(sizeOf(named) + r.missing.more * 11.5 >= gap, `missing dishes leave a gap: ${JSON.stringify(a)}`);
           for (const d of r.missing.dishes) assert.ok(d.n <= (r.advised[d.key] || 0) - (half[d.key] || 0), `asks for too much ${d.key}: ${JSON.stringify(a)}`);

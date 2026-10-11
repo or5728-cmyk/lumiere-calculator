@@ -31,7 +31,7 @@
     <form id="quiz" novalidate>
       <div class="q">
         <label class="q-title" for="guests">כמה אורחים? <span class="req" aria-hidden="true">*</span></label>
-        <input class="num" id="guests" type="number" inputmode="numeric" min="1" max="2000" step="1" dir="ltr" placeholder="50" autocomplete="off" aria-required="true" aria-describedby="guests-err">
+        <input class="num" id="guests" type="number" inputmode="numeric" min="5" max="2000" step="5" dir="ltr" placeholder="50" autocomplete="off" aria-required="true" aria-describedby="guests-err">
         <p class="err" id="guests-err" role="alert"></p>
       </div>
 
@@ -112,8 +112,8 @@
   <footer>© כל הזכויות שמורות ל-LUMIÈRE</footer>
 </div>
 
-<script src="calc.js?v=5aa02e8b"></script>
-<script src="quiz.js?v=05a464fc"></script>
+<script src="calc.js?v=484f7eb4"></script>
+<script src="quiz.js?v=a5d1b328"></script>
 <script>
 (function () {
   var WHATSAPP = '972533314432';
@@ -175,7 +175,7 @@
   function render(answers) {
     var result = calc(answers);
     var event = Quiz.describe(answers);
-    $('summary').textContent = event.who + ', ' + event.when + ', ' + event.level;
+    $('summary').textContent = event.who + ', ' + event.when + ', ' + event.level + (event.sized ? '. ' + event.sized : '');
 
     var list = $('list');
     list.textContent = '';

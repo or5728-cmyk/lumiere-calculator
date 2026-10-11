@@ -101,9 +101,14 @@ function build(a, total, need) {
   return { rows: rows.filter(function (r) { return r.n > 0; }), bites: have };
 }
 
+// Food is worked out for guests in fives, never one by one: 37 guests are fed as 40.
+// Always up, so nobody is left without.
+function byFives(guests) { return Math.ceil(guests / 5) * 5; }
+function roundToFive(n) { return Math.round(n / 5) * 5; }
+
 // What to order for an event.
 function calc(a) {
-  var need = a.guests * LEVELS[a.level].bites;
+  var need = byFives(a.guests) * LEVELS[a.level].bites;
   var list = build(a, need, need);
   // A morning event eats a little less, so try a slightly smaller spread and keep it
   // only when it really comes out smaller. It still never goes under `need`.
@@ -142,7 +147,7 @@ function check(a, quote, sizes) {
     return QUOTE_DISHES.reduce(function (sum, key) { return sum + (counts[key] || 0) * sizeOf(key); }, 0);
   };
   var have = bitesOf(quote);
-  var need = a.guests * level.bites;
+  var need = byFives(a.guests) * level.bites;
   // What the calculator would order, restated in her caterer's units and never rounded down.
   var advised = {};
   calc({ guests: a.guests, kids: a.kids, time: a.time, level: a.level, salmon: (quote.fish || 0) > 0 })
@@ -150,7 +155,7 @@ function check(a, quote, sizes) {
       if (DISHES[r.key]) advised[r.key] = Math.ceil(r.n * DISHES[r.key].size / sizeOf(r.key));
     });
   // The recommended list must never read as too much, so "plenty" is at least that.
-  var plenty = Math.max(a.guests * level.top, bitesOf(advised));
+  var plenty = Math.max(byFives(a.guests) * level.top, bitesOf(advised));
   if (have < need) {
     // The nearest five, but always short of the guest list: this quote does not cover it.
     var covers = Math.min(roundToFive(have / level.bites), Math.floor((a.guests - 1) / 5) * 5);
@@ -162,8 +167,6 @@ function check(a, quote, sizes) {
   }
   return { verdict: 'enough', advised: advised };
 }
-
-function roundToFive(n) { return Math.round(n / 5) * 5; }
 
 // Which dishes would close a gap of `gap` bites: the ones the quote is furthest behind
 // on first, and no more of each than it takes. `more` is what is still open after that,

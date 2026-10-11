@@ -65,10 +65,12 @@ var Quiz = (function () {
     return n;
   }
 
-  // The event in words, for the line under a result.
+  // The event in words, for the line under a result. `sized` says so when the food
+  // was worked out for a rounder number of guests than she typed.
   function describe(a) {
     return {
       who: a.guests + ' אורחים' + (a.kids > 0 ? ', מתוכם ' + a.kids + ' ילדים' : ''),
+      sized: byFives(a.guests) !== a.guests ? 'חישבנו לפי ' + byFives(a.guests) + ' אורחים' : '',
       when: 'ב' + TIMES[a.time],
       level: LEVELS[a.level].name
     };
