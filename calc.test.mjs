@@ -49,18 +49,20 @@ assert.equal(counts({ ...base, kids: 15 }).hot, counts(base).hot);
 assert.equal(counts(base).pizza, undefined);
 
 // Salmon: one fish per 20 adults, at least one, instead of part of the other food.
-// Kids are not counted for the fish, and the hot dishes are never cut for it.
+// A kid counts as half an adult for the fish, and the hot dishes are never cut for it.
 assert.equal(counts({ ...base, salmon: true }).fish, 3);
 assert.equal(counts({ ...base, guests: 10, salmon: true }).fish, 1);
 assert.equal(counts({ ...base, salmon: true }).hot, counts(base).hot);
-assert.equal(counts({ ...base, guests: 100, kids: 63, salmon: true }).fish, 2);
-assert.equal(counts({ ...base, guests: 30, kids: 30, salmon: true }).fish, undefined);
+assert.equal(counts({ ...base, guests: 100, kids: 63, salmon: true }).fish, 3);
+assert.equal(counts({ ...base, guests: 100, salmon: true }).fish, 5);
+assert.equal(counts({ ...base, guests: 30, kids: 30, salmon: true }).fish, 1);
 assert.equal(counts(base).fish, undefined);
 
 // The event that exposed it: 100 guests, 63 of them kids, a filling meal with salmon.
-// The fish used to follow all 100 guests while the hot dishes shrank to 9.
+// The fish used to follow all 100 guests (5) while the hot dishes shrank to 9.
+// The caterer's own answer for this event is 3 fish.
 assert.deepEqual(counts({ guests: 100, kids: 63, time: 'noon', level: 'meal', salmon: true }),
-  { hot: 14, salad: 7, bread: 7, quiche: 4, cold: 5, pizza: 5, fish: 2 });
+  { hot: 14, salad: 6, bread: 7, quiche: 4, cold: 5, pizza: 5, fish: 3 });
 
 // The taboon note appears only when kids are more than a third of the guests.
 assert.equal(calc({ ...base, guests: 60, kids: 20 }).taboon, false);

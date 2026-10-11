@@ -160,6 +160,7 @@ legend.q-title { margin-bottom: 10px; }
 .list small { display: block; font-size: 0.95rem; }
 .list .n { font-family: var(--display); font-weight: 800; font-size: 2.4rem; line-height: 1; min-width: 1.4em; text-align: center; }
 .note { margin: 0; font-size: 1rem; }
+#taboon { font-size: 1.2rem; font-weight: 700; text-align: center; }
 .advice { margin: 0; padding: 14px 16px; border: 2px solid var(--ink); border-radius: 18px; text-align: center; }
 .offer { background: var(--blush); border-radius: 22px; padding: 20px 18px; text-align: center; }
 .offer p { margin: 0 0 12px; font-size: 1.25rem; font-weight: 700; }
@@ -303,6 +304,8 @@ var MIXES = {
 var ADULTS_FOR_BREADS = 40;
 var BREADS = { name: 'לחמים ומטבלים', cap: 'מגוון לחמים עם מטבלים לשולחן' };
 var ADULTS_PER_FISH = 20;
+// For the fish, a kid counts as half an adult.
+var KID_SHARE_OF_FISH = 0.5;
 var FISH_SIZE = 15;
 var GUESTS_PER_PIZZA_TRAY = 20;
 // A pizza tray holds about 24 pieces; it is counted as 20 so the list is not cut too far.
@@ -315,8 +318,8 @@ var OFFER_MIN_GUESTS = 40;
 function build(a, total, need) {
   var light = a.level === 'light';
   var adults = a.guests - a.kids;
-  // Fish is for the adults. Pizzas are for the kids, counted by the size of the event.
-  var fish = a.salmon && adults > 0 ? Math.max(1, Math.round(adults / ADULTS_PER_FISH)) : 0;
+  // Fish is mostly for the adults. Pizzas are for the kids, counted by the size of the event.
+  var fish = a.salmon ? Math.max(1, Math.round((adults + a.kids * KID_SHARE_OF_FISH) / ADULTS_PER_FISH)) : 0;
   var pizza = a.kids > 0 ? Math.max(1, Math.round(a.guests / GUESTS_PER_PIZZA_TRAY)) : 0;
   var breads = adults >= ADULTS_FOR_BREADS ? 1 : 0;
   // Fish and pizzas take the place of part of the other food, but never of the hot
