@@ -162,6 +162,8 @@ legend.q-title { margin-bottom: 10px; }
 .note { margin: 0; font-size: 1rem; }
 #taboon { font-size: 1.2rem; font-weight: 700; text-align: center; }
 .advice { margin: 0; padding: 14px 16px; border: 2px solid var(--ink); border-radius: 18px; text-align: center; }
+.advice p { margin: 0; }
+.advice p + p { margin-top: 12px; padding-top: 12px; border-top: 1px dashed var(--line); }
 .offer { background: var(--blush); border-radius: 22px; padding: 20px 18px; text-align: center; }
 .offer p { margin: 0 0 12px; font-size: 1.25rem; font-weight: 700; }
 
@@ -239,7 +241,10 @@ footer { margin-top: auto; padding-top: 32px; text-align: center; font-size: 0.8
         <p class="summary" id="summary"></p>
       </div>
       <ul class="list" id="list"></ul>
-      <p class="advice"><strong>זו המלצה בלבד.</strong> בסופו של דבר את מכירה את האורחים שלך הכי טוב: אם הם אוהבים לאכול ולהתפנק, או שמספיק להם לנשנש. לפי זה תחליטי.</p>
+      <div class="advice">
+        <p><strong>זו המלצה בלבד.</strong> בסופו של דבר את מכירה את האורחים שלך הכי טוב: אם הם אוהבים לאכול ולהתפנק, או שמספיק להם לנשנש. לפי זה תחליטי.</p>
+        <p><strong>מזמינה מקייטרינג אחר?</strong> הרשימה מחושבת לפי הגדלים שכתובים מתחת לכל מנה. תבדקי מולו לכמה אורחים מתאימה כל מנה אצלו.</p>
+      </div>
       <p class="note" id="taboon" hidden>* הרבה ילדים באירוע? שווה לשקול טאבון פיצות.</p>
       <div class="offer" id="offer" hidden>
         <p>תרצי הצעת מחיר מאיתנו?</p>
@@ -277,7 +282,7 @@ var DISHES = {
   hot:    { size: 10, name: 'מנות חמות',                    cap: 'כל מנה מתאימה לכ-10 אורחים' },
   salad:  { size: 10, name: 'סלטים',                        cap: 'כל סלט מתאים לכ-10 אורחים' },
   bread:  { size: 14, name: 'כריכים / קרואסונים / טורטיות', cap: 'מגשים של 12-16 יחידות' },
-  pastry: { size: 24, name: 'מאפים / בורקסים',              cap: 'מגשים של כ-24 יחידות' },
+  pastry: { size: 24, name: 'מאפים / בורקסים / פינגר פוד',  cap: 'מגשים של כ-24 יחידות' },
   quiche: { size: 8,  name: 'קישים / פשטידות / קציצות',     cap: 'כל מנה מתאימה ל-8-10 אורחים' },
   cold:   { size: 12, name: 'מנות קרות / פלטת גבינות',      cap: 'כל אחת מתאימה ל-12-15 אורחים' }
 };
@@ -518,7 +523,6 @@ function calc(a) {
     ol.appendChild(el('li', (light ? 'הוספנו מגש כריכים אחד' : 'הוספנו מנה חמה אחת ומגש כריכים אחד') +
       (hasBreads ? ', וגם לחמים ומטבלים לשולחן' : '') + '. תמיד עדיף שיהיה יותר מאשר שיחסר.'));
     why.appendChild(ol);
-    why.appendChild(el('p', 'מזמינה ממקום אחר? תשאלי לכמה אורחים מתאימה כל מנה, והרשימה תעבוד גם שם.'));
   }
 })();
 </script>
