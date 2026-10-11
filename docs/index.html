@@ -282,19 +282,21 @@ var DISHES = {
   cold:   { size: 12, name: 'מנות קרות / פלטת גבינות',      cap: 'כל אחת מתאימה ל-12-15 אורחים' }
 };
 // How the food is shared out. `extra` is added once to the whole order, not per guest.
-// `keep` marks a dish that fish and pizzas never cut into.
+// `keep` marks a dish that fish and pizzas never cut into. `swap` marks the dish a
+// fish takes the place of: in real orders a fish on the table means fewer sandwich trays,
+// while the hot dishes and salads stay as they were.
 // A light spread has no hot dishes at all: their share goes to food you pick up by hand.
 var MIXES = {
   full: [
     { key: 'hot',    share: 0.25, extra: 1, min: 1, keep: true },
     { key: 'salad',  share: 0.20, extra: 0, min: 1 },
-    { key: 'bread',  share: 0.26, extra: 1, min: 1 },
+    { key: 'bread',  share: 0.26, extra: 1, min: 1, swap: true },
     { key: 'quiche', share: 0.10, extra: 0, min: 0 },
     { key: 'cold',   share: 0.19, extra: 0, min: 0 }
   ],
   light: [
     { key: 'salad',  share: 0.18, extra: 0, min: 1 },
-    { key: 'bread',  share: 0.28, extra: 1, min: 1 },
+    { key: 'bread',  share: 0.28, extra: 1, min: 1, swap: true },
     { key: 'pastry', share: 0.30, extra: 0, min: 1 },
     { key: 'quiche', share: 0.10, extra: 0, min: 0 },
     { key: 'cold',   share: 0.14, extra: 0, min: 0 }
@@ -307,6 +309,9 @@ var ADULTS_PER_FISH = 20;
 // For the fish, a kid counts as half an adult.
 var KID_SHARE_OF_FISH = 0.5;
 var FISH_SIZE = 15;
+// How much of the sandwich trays one fish takes the place of. In real orders a fish
+// comes with about two thirds of a tray fewer, not a whole tray.
+var FISH_REPLACES = 10;
 var GUESTS_PER_PIZZA_TRAY = 20;
 // A pizza tray holds about 24 pieces; it is counted as 20 so the list is not cut too far.
 var PIZZA_SIZE = 20;
@@ -322,16 +327,20 @@ function build(a, total, need) {
   var fish = a.salmon ? Math.max(1, Math.round((adults + a.kids * KID_SHARE_OF_FISH) / ADULTS_PER_FISH)) : 0;
   var pizza = a.kids > 0 ? Math.max(1, Math.round(a.guests / GUESTS_PER_PIZZA_TRAY)) : 0;
   var breads = adults >= ADULTS_FOR_BREADS ? 1 : 0;
-  // Fish and pizzas take the place of part of the other food, but never of the hot
-  // dishes: those are what the kids eat too. Breads come on top of everything.
+  // Pizzas take the place of part of the other food, but never of the hot dishes:
+  // those are what the kids eat too. A fish takes the place of sandwich trays.
+  // Breads with dips come on top of everything.
   var mix = MIXES[light ? 'light' : 'full'];
   var kept = mix.reduce(function (sum, c) { return sum + (c.keep ? c.share : 0); }, 0);
-  var taken = fish * FISH_SIZE + pizza * PIZZA_SIZE;
-  var open = Math.max(0, total * (1 - kept) - taken) / (1 - kept);
-  var have = taken;
+  var pizzaBites = pizza * PIZZA_SIZE;
+  var fishBites = fish * FISH_SIZE;
+  var open = Math.max(0, total * (1 - kept) - pizzaBites) / (1 - kept);
+  var have = pizzaBites + fishBites;
   var rows = mix.map(function (c) {
     var d = DISHES[c.key];
-    var ideal = (c.keep ? total : open) * c.share / d.size;
+    var budget = (c.keep ? total : open) * c.share;
+    if (c.swap) budget = Math.max(0, budget - fish * FISH_REPLACES);
+    var ideal = budget / d.size;
     var n = Math.max(c.min, Math.round(ideal));
     have += (n + c.extra) * d.size;
     return { key: c.key, name: d.name, cap: d.cap, n: n + c.extra, size: d.size, short: ideal - n };

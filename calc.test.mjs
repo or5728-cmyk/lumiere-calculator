@@ -48,8 +48,12 @@ assert.deepEqual(counts({ ...base, kids: 15 }), { hot: 7, salad: 3, bread: 4, qu
 assert.equal(counts({ ...base, kids: 15 }).hot, counts(base).hot);
 assert.equal(counts(base).pizza, undefined);
 
-// Salmon: one fish per 20 adults, at least one, instead of part of the other food.
-// A kid counts as half an adult for the fish, and the hot dishes are never cut for it.
+// Salmon: one fish per 20 adults, at least one. A kid counts as half an adult for the
+// fish. A fish takes the place of sandwich trays only (about two thirds of a tray
+// each); the hot dishes, salads and the rest of the list stay exactly as they were.
+assert.deepEqual(counts({ ...base, salmon: true }), { hot: 7, salad: 5, bread: 4, breads: 1, quiche: 3, cold: 4, fish: 3 });
+for (const k of ['hot', 'salad', 'quiche', 'cold']) assert.equal(counts({ ...base, guests: 100, salmon: true })[k], counts({ ...base, guests: 100 })[k], k);
+assert.ok(counts({ ...base, guests: 100, salmon: true }).bread < counts({ ...base, guests: 100 }).bread);
 assert.equal(counts({ ...base, salmon: true }).fish, 3);
 assert.equal(counts({ ...base, guests: 10, salmon: true }).fish, 1);
 assert.equal(counts({ ...base, salmon: true }).hot, counts(base).hot);
@@ -62,7 +66,7 @@ assert.equal(counts(base).fish, undefined);
 // The fish used to follow all 100 guests (5) while the hot dishes shrank to 9.
 // The caterer's own answer for this event is 3 fish.
 assert.deepEqual(counts({ guests: 100, kids: 63, time: 'noon', level: 'meal', salmon: true }),
-  { hot: 14, salad: 6, bread: 7, quiche: 4, cold: 5, pizza: 5, fish: 3 });
+  { hot: 14, salad: 7, bread: 6, quiche: 5, cold: 6, pizza: 5, fish: 3 });
 
 // The taboon note appears only when kids are more than a third of the guests.
 assert.equal(calc({ ...base, guests: 60, kids: 20 }).taboon, false);
