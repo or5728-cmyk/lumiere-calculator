@@ -18,7 +18,14 @@ assert.equal(counts({ ...base, guests: 100 }).hot, 14);
 assert.equal(counts({ ...base, guests: 100 }).bread, 10);
 
 // A lighter spread asks for less, a lavish one for more.
-assert.deepEqual(counts({ ...base, level: 'light' }), { hot: 5, salad: 3, bread: 4, quiche: 2, cold: 2 });
+// A light spread has no hot dishes at all. Their share goes to pastries and to breads
+// with dips, and only the sandwich tray gets the extra one.
+const light = counts({ ...base, level: 'light' });
+assert.deepEqual(light, { salad: 2, bread: 3, pastry: 2, dips: 1, quiche: 2, cold: 1 });
+assert.equal(light.hot, undefined);
+for (const time of ['morning', 'noon', 'evening']) assert.equal(counts({ ...base, level: 'light', time }).hot, undefined, time);
+assert.equal(counts(base).pastry, undefined);
+assert.equal(counts(base).dips, undefined);
 assert.deepEqual(counts({ ...base, level: 'lavish' }), { hot: 10, salad: 7, bread: 8, quiche: 4, cold: 6 });
 
 // Morning never asks for more than evening.
@@ -46,8 +53,9 @@ assert.equal(calc({ ...base, guests: 39 }).offer, false);
 assert.equal(calc({ ...base, guests: 40 }).offer, true);
 
 // The three fixed categories never drop out, even for a tiny event.
-const tiny = counts({ ...base, guests: 1, level: 'light' });
+const tiny = counts({ ...base, guests: 1 });
 assert.ok(tiny.hot >= 1 && tiny.salad >= 1 && tiny.bread >= 1);
 
 console.log('calc: all cases pass');
 for (const g of [20, 40, 50, 60, 80, 100, 150]) console.log(g, JSON.stringify(counts({ ...base, guests: g })));
+for (const g of [20, 30, 50, 80, 100]) console.log('light', g, JSON.stringify(counts({ ...base, guests: g, level: 'light' })));
